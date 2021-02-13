@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30503.244
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RiteAidWatcher", "RiteAidWatcher\RiteAidWatcher.csproj", "{4FFC9743-515E-4AC6-8EDD-A98E19A20C07}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4FFC9743-515E-4AC6-8EDD-A98E19A20C07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4FFC9743-515E-4AC6-8EDD-A98E19A20C07}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4FFC9743-515E-4AC6-8EDD-A98E19A20C07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4FFC9743-515E-4AC6-8EDD-A98E19A20C07}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {05B4C15D-262B-4D8B-8362-62F9730FB322}
+	EndGlobalSection
+EndGlobal
