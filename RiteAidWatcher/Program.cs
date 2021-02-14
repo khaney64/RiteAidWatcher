@@ -166,6 +166,7 @@ namespace RiteAidWatcher
                 // see if this store was active - if so, mark the end date
                 if (storeAlert != null)
                 {
+                    Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} no longer has slots");
                     storeAlert.End = DateTime.Now;
                 }
             }
