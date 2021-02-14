@@ -126,7 +126,8 @@ namespace RiteAidWatcher
                     results = FilterStores(results).ToList();
                     checkedZips.Add(zip);
 
-                    if (results.Count >= MaxStores)
+                    haveUnchecked = results.Exists(s => !checkedZips.Contains(s.zipcode));
+                    if (results.Count >= MaxStores || !haveUnchecked)
                         break;
                 }
             }
