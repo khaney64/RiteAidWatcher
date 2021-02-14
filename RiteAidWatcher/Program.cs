@@ -13,8 +13,8 @@ namespace RiteAidWatcher
     class RiteAidWatcher
     {
         const int WaitSecondsBetweenSearch = 3;
-        const int WaitSecondsBetweenStores = 2;
-        const int WaitSecondsBetweenChecks = 30;
+        const int WaitSecondsBetweenStores = 1;
+        const int WaitSecondsBetweenChecks = 5;
 
         const string BaseAddress = "https://www.riteaid.com";
         const string FetchStoresTemplate = "/services/ext/v2/stores/getStores?address={0}&attrFilter=PREF-112&fetchMechanismVersion=2&radius=50";
@@ -33,7 +33,10 @@ namespace RiteAidWatcher
             var client = new HttpClient(handler) { BaseAddress = new Uri(BaseAddress) };
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
+            client.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue
+            {
+                NoCache = true
+            };
             await new RiteAidWatcher(client).Watch(zips);
         }
 
@@ -62,7 +65,7 @@ namespace RiteAidWatcher
                 foreach (var store in stores)
                 {
                     var slot = await Check(store);
-                    haveActive |= slot._1 || slot._2;
+                    haveActive |= slot.Slot1 || slot.Slot2;
                     ProcessStoreSlot(store, slot);
                     Thread.Sleep(WaitSecondsBetweenStores * 1000);
                 }
@@ -98,7 +101,7 @@ namespace RiteAidWatcher
 
         private void ProcessStoreSlot(Store store, Slots slot)
         {
-            if (slot._1 || slot._2)
+            if (slot.Slot1 || slot.Slot2)
             {
                 // see if there is an active alert, if so we'll add to that
                 var activeAlert = Alerts.Find(a => a.AlertStatus == AlertStatusType.Active || a.AlertStatus == AlertStatusType.New);
@@ -116,9 +119,10 @@ namespace RiteAidWatcher
                 {
                     storeAlert = new AlertData();
                     activeAlert.ActiveStores.Add(store.storeNumber, storeAlert);
+                    Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} {store.address} {store.city} {store.zipcode} has slots {slot.Slot1} {slot.Slot2}");
                 }
-                storeAlert.Slot1 = slot._1;
-                storeAlert.Slot2 = slot._2;
+                storeAlert.Slot1 = slot.Slot1;
+                storeAlert.Slot2 = slot.Slot2;
             }
         }
 
@@ -158,12 +162,7 @@ namespace RiteAidWatcher
 
             var root = JsonConvert.DeserializeObject<SlotsRoot>(jsonResponse);
 
-            if (root.Slots._1 || root.Slots._2)
-            {
-                Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} {store.address} {store.city} has slots {root.Slots._1} {root.Slots._2}");
-            }
-
-            return root.Slots;
+            return root.Data.Slots;
         }
 
         private async Task<string> FetchSlotsForStore(Store store)
