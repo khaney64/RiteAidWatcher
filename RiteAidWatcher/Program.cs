@@ -27,10 +27,12 @@ namespace RiteAidWatcher
 
         private readonly List<Alert> Alerts;
         private readonly Notifier Notifier;
+        private readonly bool Filter;
 
         async static Task Main(string[] args)
         {
             var zip = args[0];
+            bool filter = args.Length > 1 ? bool.Parse(args[1]) : true;
 
             IConfigurationBuilder builder = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json")
@@ -52,14 +54,15 @@ namespace RiteAidWatcher
 
             provider = services.BuildServiceProvider();
 
-            await new RiteAidWatcher().Watch(zip);
+            await new RiteAidWatcher(filter).Watch(zip);
         }
 
-        private RiteAidWatcher()
+        private RiteAidWatcher(bool filter)
         {
             Alerts = new List<Alert>();
             var configuration = provider.GetService<NotifierConfiguration>();
             Notifier = new Notifier(configuration);
+            Filter = filter;
         }
 
         private async Task Watch(string zip)
@@ -108,7 +111,10 @@ namespace RiteAidWatcher
             var jsonResponse = await FetchStoresForZip(zip);
             var centerStore = JsonConvert.DeserializeObject<StoreRoot>(jsonResponse);
             results.AddRange(centerStore.Data.stores);
-            results = FilterStores(results).ToList();
+            if (Filter)
+            {
+                results = FilterStores(results).ToList();
+            }
             checkedZips.Add(zip);
 
             var haveUnchecked = results.Exists(s => !checkedZips.Contains(s.zipcode));
@@ -123,7 +129,10 @@ namespace RiteAidWatcher
                     Thread.Sleep(WaitSecondsBetweenSearch * 1000);
                     var zipStore = JsonConvert.DeserializeObject<StoreRoot>(await FetchStoresForZip(store.zipcode));
                     results.AddRange(zipStore.Data.stores);
-                    results = FilterStores(results).ToList();
+                    if (Filter)
+                    {
+                        results = FilterStores(results).ToList();
+                    }
                     checkedZips.Add(zip);
 
                     haveUnchecked = results.Exists(s => !checkedZips.Contains(s.zipcode));
