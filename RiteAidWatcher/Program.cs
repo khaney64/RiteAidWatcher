@@ -75,57 +75,6 @@ namespace RiteAidWatcher
             } while(true);
         }
 
-        private void CheckAlerts(bool haveActive)
-        {
-            var activeAlert = Alerts.Find(a => a.AlertStatus != AlertStatusType.Complete);
-            if (activeAlert == null)
-            {
-                return;
-            }
-
-            if (activeAlert.AlertStatus == AlertStatusType.Active && haveActive == false)
-            {
-                Console.WriteLine($"{DateTime.Now:s} : Ending alert - {activeAlert.ActiveStores.Keys.Count} active stores");
-                // send an email or some notification here
-                activeAlert.AlertStatus = AlertStatusType.Complete;
-            }
-
-            if (activeAlert.AlertStatus == AlertStatusType.New)
-            {
-                Console.WriteLine($"{DateTime.Now:s} : Starting alert - {activeAlert.ActiveStores.Keys.Count} active stores");
-                // send an email or some notification here
-                activeAlert.AlertStatus = AlertStatusType.Active;
-            }
-
-        }
-
-        private void ProcessStoreSlot(Store store, Slots slot)
-        {
-            if (slot.Slot1 || slot.Slot2)
-            {
-                // see if there is an active alert, if so we'll add to that
-                var activeAlert = Alerts.Find(a => a.AlertStatus == AlertStatusType.Active || a.AlertStatus == AlertStatusType.New);
-                if (activeAlert == null)
-                {
-                    activeAlert = new Alert()
-                    {
-                        AlertStatus = AlertStatusType.New,
-                        ActiveStores = new Dictionary<int, AlertData>()
-                    };
-                    Alerts.Add(activeAlert);
-                }
-
-                if (!activeAlert.ActiveStores.TryGetValue(store.storeNumber, out var storeAlert))
-                {
-                    storeAlert = new AlertData();
-                    activeAlert.ActiveStores.Add(store.storeNumber, storeAlert);
-                    Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} {store.address} {store.city} {store.zipcode} has slots {slot.Slot1} {slot.Slot2}");
-                }
-                storeAlert.Slot1 = slot.Slot1;
-                storeAlert.Slot2 = slot.Slot2;
-            }
-        }
-
         private async Task<IEnumerable<Store>> FetchStoreData(List<string> zips)
         {
             var results = new List<Store>();
@@ -154,6 +103,72 @@ namespace RiteAidWatcher
         {
             var uri = String.Format(FetchStoresTemplate, zip);
             return await FetchJsonResponse(uri);
+        }
+
+        private void CheckAlerts(bool haveActive)
+        {
+            var activeAlert = Alerts.Find(a => a.AlertStatus != AlertStatusType.Complete);
+            if (activeAlert == null)
+            {
+                return;
+            }
+
+            if (activeAlert.AlertStatus == AlertStatusType.Active && haveActive == false)
+            {
+                Console.WriteLine($"{DateTime.Now:s} : Ending alert - {activeAlert.ActiveStores.Keys.Count} active stores");
+                foreach (var store in activeAlert.ActiveStores)
+                {
+                    var duration = (store.Value.End - store.Value.End).TotalMinutes;
+                    Console.WriteLine($"{DateTime.Now:s} : Store {store.Value.StoreNumber} - Start {store.Value.Start:s} End {store.Value.End:s} ({duration} minutes)");
+                }
+                // send an email or some notification here
+                activeAlert.AlertStatus = AlertStatusType.Complete;
+            }
+
+            if (activeAlert.AlertStatus == AlertStatusType.New)
+            {
+                Console.WriteLine($"{DateTime.Now:s} : Starting alert - {activeAlert.ActiveStores.Keys.Count} active stores");
+                // send an email or some notification here
+                activeAlert.AlertStatus = AlertStatusType.Active;
+            }
+
+        }
+
+        private void ProcessStoreSlot(Store store, Slots slot)
+        {
+            var activeAlert = Alerts.Find(a => a.AlertStatus == AlertStatusType.Active || a.AlertStatus == AlertStatusType.New);
+            AlertData storeAlert = null;
+            activeAlert?.ActiveStores.TryGetValue(store.storeNumber, out storeAlert);
+            if (slot.Slot1 || slot.Slot2)
+            {
+                // see if there is an active alert, if so we'll add to that, otherwise create a new one
+                if (activeAlert == null)
+                {
+                    activeAlert = new Alert()
+                    {
+                        AlertStatus = AlertStatusType.New,
+                        ActiveStores = new Dictionary<int, AlertData>()
+                    };
+                    Alerts.Add(activeAlert);
+                }
+
+                if (storeAlert == null)
+                {
+                    storeAlert = new AlertData() { StoreNumber = store.storeNumber, Start = DateTime.Now };
+                    activeAlert.ActiveStores.Add(store.storeNumber, storeAlert);
+                    Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} {store.address} {store.city} {store.zipcode} has slots {slot.Slot1} {slot.Slot2}");
+                }
+                storeAlert.Slot1 = slot.Slot1;
+                storeAlert.Slot2 = slot.Slot2;
+            }
+            else
+            {
+                // see if this store was active - if so, mark the end date
+                if (storeAlert != null)
+                {
+                    storeAlert.End = DateTime.Now;
+                }
+            }
         }
 
         private async Task<Slots> Check(Store store)
