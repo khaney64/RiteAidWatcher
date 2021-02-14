@@ -15,6 +15,7 @@ namespace RiteAidWatcher
         const int WaitSecondsBetweenSearch = 3;
         const int WaitSecondsBetweenStores = 1;
         const int WaitSecondsBetweenChecks = 5;
+        const int MaxStores = 60;
 
         const string BaseAddress = "https://www.riteaid.com";
         const string FetchStoresTemplate = "/services/ext/v2/stores/getStores?address={0}&attrFilter=PREF-112&fetchMechanismVersion=2&radius=50";
@@ -25,7 +26,7 @@ namespace RiteAidWatcher
 
         async static Task Main(string[] args)
         {
-            var zips = new List<string>(args[0].Split(","));
+            var zip = args[0];
 
             var cookies = new CookieContainer(); // load/save this?
 
@@ -37,7 +38,7 @@ namespace RiteAidWatcher
             {
                 NoCache = true
             };
-            await new RiteAidWatcher(client).Watch(zips);
+            await new RiteAidWatcher(client).Watch(zip);
         }
 
         private RiteAidWatcher(HttpClient client)
@@ -47,13 +48,14 @@ namespace RiteAidWatcher
         }
 
 
-        private async Task Watch(List<string> zips)
+        private async Task Watch(string zip)
         {
-            var stores = (await FetchStoreData(zips)).ToList();
-            Console.WriteLine($"Found {stores.Count} stores");
+            //var stores = (await FetchStoreData(zips)).ToList();
+            var stores = (await BuildStores(zip)).ToList();
+            Console.WriteLine($"Found {stores.Count} stores from zip code {zip}");
             foreach (var store in stores)
             {
-                Console.WriteLine($"Watching store {store.storeNumber} {store.address} {store.city} {store.zipcode}");
+                Console.WriteLine($"Watching store {store.storeNumber} ({store.milesFromCenter:0.00} miles) {store.address} {store.city} {store.zipcode}");
             }
 
             Console.WriteLine($"{DateTime.Now:s} {WaitSecondsBetweenStores} second delay between stores, {WaitSecondsBetweenChecks} second delay between checks");
@@ -75,20 +77,72 @@ namespace RiteAidWatcher
             } while(true);
         }
 
-        private async Task<IEnumerable<Store>> FetchStoreData(List<string> zips)
+        /// <summary>
+        /// Build out a list of stores from the given zip code.
+        /// It'll get an initial list of stores (10) from main zip code.  Will then continue to get 10 stores from surrounding zips until we hit our max (or maybe run out of zips)
+        /// </summary>
+        /// <param name="zip"></param>
+        /// <returns></returns>
+        private async Task<IEnumerable<Store>> BuildStores(string zip)
         {
             var results = new List<Store>();
+            var checkedZips = new List<string>();
 
-            foreach (var zip in zips)
+            var jsonResponse = await FetchStoresForZip(zip);
+            var root = JsonConvert.DeserializeObject<StoreRoot>(jsonResponse);
+            results.AddRange(root.Data.stores);
+            results = FilterStores(results).ToList();
+            checkedZips.Add(zip);
+
+            var haveUnchecked = results.Exists(s => !checkedZips.Contains(s.zipcode));
+            while (results.Count < MaxStores && haveUnchecked)
             {
-                Console.WriteLine($"Searching zip {zip}");
-                var jsonResponse = await FetchStoresForZip(zip);
-                var root = JsonConvert.DeserializeObject<StoreRoot>(jsonResponse);
+                for (var s = 0; s < results.Count; s++)
+                {
+                    var store = results[s];
+                    if (checkedZips.Contains(store.zipcode))
+                        continue;
 
-                results.AddRange(root.Data.stores);
-                Thread.Sleep(WaitSecondsBetweenSearch * 1000);
+                    var zipRoot = JsonConvert.DeserializeObject<StoreRoot>(await FetchStoresForZip(store.zipcode));
+                    results.AddRange(zipRoot.Data.stores);
+                    results = FilterStores(results).ToList();
+                    checkedZips.Add(zip);
+
+                    if (results.Count >= MaxStores)
+                        break;
+                }
             }
 
+            foreach (var store in results)
+            {
+                if (store.zipcode == zip)
+                {
+                    store.milesFromCenter = 0.0;
+                }
+                else
+                {
+                    store.milesFromCenter = CalculateDistance(results[0], store);
+                }
+            }
+
+            return results.OrderBy(s => s.milesFromCenter);
+        }
+
+        private double CalculateDistance(Store centerStore, Store store)
+        {
+            var d1 = centerStore.latitude * (Math.PI / 180.0);
+            var num1 = centerStore.longitude * (Math.PI / 180.0);
+            var d2 = store.latitude * (Math.PI / 180.0);
+            var num2 = store.longitude * (Math.PI / 180.0) - num1;
+            var d3 = Math.Pow(Math.Sin((d2 - d1) / 2.0), 2.0) +
+                     Math.Cos(d1) * Math.Cos(d2) * Math.Pow(Math.Sin(num2 / 2.0), 2.0);
+            var meters = 6376500.0 * (2.0 * Math.Atan2(Math.Sqrt(d3), Math.Sqrt(1.0 - d3)));
+
+            return meters * 0.000621371;
+        }
+
+        private IEnumerable<Store> FilterStores(List<Store> results)
+        {
             // remove Philadelphia stores
             results.RemoveAll(s => s.city.ToLower() == "philadelphia");
 
@@ -156,7 +210,7 @@ namespace RiteAidWatcher
                 {
                     storeAlert = new AlertData() { StoreNumber = store.storeNumber, Start = DateTime.Now };
                     activeAlert.ActiveStores.Add(store.storeNumber, storeAlert);
-                    Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} {store.address} {store.city} {store.zipcode} has slots {slot.Slot1} {slot.Slot2}");
+                    Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} ({store.milesFromCenter} miles) {store.address} {store.city} {store.zipcode} has slots {slot.Slot1} {slot.Slot2}");
                 }
                 storeAlert.Slot1 = slot.Slot1;
                 storeAlert.Slot2 = slot.Slot2;
