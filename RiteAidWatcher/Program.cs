@@ -172,8 +172,8 @@ namespace RiteAidWatcher
                 Console.WriteLine($"{DateTime.Now:s} : Ending alert - {activeAlert.ActiveStores.Keys.Count} active stores");
                 foreach (var store in activeAlert.ActiveStores)
                 {
-                    var duration = (store.Value.End.Value - store.Value.End.Value).TotalMinutes;
-                    Console.WriteLine($"{DateTime.Now:s} : Store {store.Value.StoreNumber} - Start {store.Value.Start.Value:s} End {store.Value.End.Value:s} ({duration} minutes)");
+                    var duration = (store.Value.End.Value - store.Value.Start.Value).TotalMinutes;
+                    Console.WriteLine($"{DateTime.Now:s} : Store {store.Value.StoreNumber} - Start {store.Value.Start.Value:s} End {store.Value.End.Value:s} ({duration:###0} minutes)");
                 }
                 // send an email or some notification here
                 activeAlert.AlertStatus = AlertStatusType.Complete;
@@ -210,7 +210,7 @@ namespace RiteAidWatcher
                 {
                     storeAlert = new AlertData() { StoreNumber = store.storeNumber, Start = DateTime.Now };
                     activeAlert.ActiveStores.Add(store.storeNumber, storeAlert);
-                    Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} ({store.milesFromCenter} miles) {store.address} {store.city} {store.zipcode} has slots {slot.Slot1} {slot.Slot2}");
+                    Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} ({store.milesFromCenter:0.00} miles) {store.address} {store.city} {store.zipcode} has slots {slot.Slot1} {slot.Slot2}");
                 }
                 storeAlert.Slot1 = slot.Slot1;
                 storeAlert.Slot2 = slot.Slot2;
