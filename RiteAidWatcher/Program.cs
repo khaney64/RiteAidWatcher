@@ -118,8 +118,8 @@ namespace RiteAidWatcher
                 Console.WriteLine($"{DateTime.Now:s} : Ending alert - {activeAlert.ActiveStores.Keys.Count} active stores");
                 foreach (var store in activeAlert.ActiveStores)
                 {
-                    var duration = (store.Value.End - store.Value.End).TotalMinutes;
-                    Console.WriteLine($"{DateTime.Now:s} : Store {store.Value.StoreNumber} - Start {store.Value.Start:s} End {store.Value.End:s} ({duration} minutes)");
+                    var duration = (store.Value.End.Value - store.Value.End.Value).TotalMinutes;
+                    Console.WriteLine($"{DateTime.Now:s} : Store {store.Value.StoreNumber} - Start {store.Value.Start.Value:s} End {store.Value.End.Value:s} ({duration} minutes)");
                 }
                 // send an email or some notification here
                 activeAlert.AlertStatus = AlertStatusType.Complete;
@@ -166,7 +166,10 @@ namespace RiteAidWatcher
                 // see if this store was active - if so, mark the end date
                 if (storeAlert != null)
                 {
-                    Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} no longer has slots");
+                    if (storeAlert.End == null)
+                    {
+                        Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} no longer has slots");
+                    }
                     storeAlert.End = DateTime.Now;
                 }
             }

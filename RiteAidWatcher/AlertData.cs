@@ -12,8 +12,8 @@ namespace RiteAidWatcher
 
         public bool Slot2 { get; set; }
 
-        public DateTime Start { get; set; }
+        public DateTime? Start { get; set; }
 
-        public DateTime End { get; set; }
+        public DateTime? End { get; set; }
     }
 }
