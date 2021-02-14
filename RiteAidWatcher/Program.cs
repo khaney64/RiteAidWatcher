@@ -247,7 +247,7 @@ namespace RiteAidWatcher
             }
         }
 
-        private async Task<Slots?> Check(Store store)
+        private async Task<Slots> Check(Store store)
         {
             var jsonResponse = await FetchSlotsForStore(store);
 
