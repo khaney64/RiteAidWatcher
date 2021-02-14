@@ -1,8 +1,9 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
@@ -12,6 +13,9 @@ namespace RiteAidWatcher
 {
     class RiteAidWatcher
     {
+        private static IConfigurationRoot Configuration;
+        private static IServiceProvider provider;
+
         const int WaitSecondsBetweenSearch = 3;
         const int WaitSecondsBetweenStores = 1;
         const int WaitSecondsBetweenChecks = 5;
@@ -21,32 +25,42 @@ namespace RiteAidWatcher
         const string FetchStoresTemplate = "/services/ext/v2/stores/getStores?address={0}&attrFilter=PREF-112&fetchMechanismVersion=2&radius=50";
         const string FetchSlotsTemplate = "/services/ext/v2/vaccine/checkSlots?storeNumber={0}";
 
-        private readonly HttpClient HttpClient;
         private readonly List<Alert> Alerts;
+        private readonly Notifier Notifier;
 
         async static Task Main(string[] args)
         {
             var zip = args[0];
 
-            var cookies = new CookieContainer(); // load/save this?
+            IConfigurationBuilder builder = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json")
+                .AddEnvironmentVariables()
+                .AddUserSecrets<NotifierConfiguration>();
+            Configuration = builder.Build();
 
-            var handler = new HttpClientHandler() { CookieContainer = cookies };
-            var client = new HttpClient(handler) { BaseAddress = new Uri(BaseAddress) };
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            client.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue
+            IServiceCollection services = new ServiceCollection();
+            services.AddHttpClient("riteaid", c =>
             {
-                NoCache = true
-            };
-            await new RiteAidWatcher(client).Watch(zip);
+                c.BaseAddress = new Uri(BaseAddress);
+                c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                c.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue
+                {
+                    NoCache = true
+                };
+            });
+            services.AddSingleton(new NotifierConfiguration(Configuration));
+
+            provider = services.BuildServiceProvider();
+
+            await new RiteAidWatcher().Watch(zip);
         }
 
-        private RiteAidWatcher(HttpClient client)
+        private RiteAidWatcher()
         {
-            HttpClient = client;
             Alerts = new List<Alert>();
+            var configuration = provider.GetService<NotifierConfiguration>();
+            Notifier = new Notifier(configuration);
         }
-
 
         private async Task Watch(string zip)
         {
@@ -67,8 +81,11 @@ namespace RiteAidWatcher
                 foreach (var store in stores)
                 {
                     var slot = await Check(store);
-                    haveActive |= slot.Slot1 || slot.Slot2;
-                    ProcessStoreSlot(store, slot);
+                    if (slot != null)
+                    {
+                        haveActive |= slot.Slot1 || slot.Slot2;
+                        ProcessStoreSlot(store, slot);
+                    }
                     Thread.Sleep(WaitSecondsBetweenStores * 1000);
                 }
                 //Console.WriteLine($"{DateTime.Now:s} : sleeping for {WaitSecondsBetweenChecks} seconds");
@@ -89,8 +106,8 @@ namespace RiteAidWatcher
             var checkedZips = new List<string>();
 
             var jsonResponse = await FetchStoresForZip(zip);
-            var root = JsonConvert.DeserializeObject<StoreRoot>(jsonResponse);
-            results.AddRange(root.Data.stores);
+            var centerStore = JsonConvert.DeserializeObject<StoreRoot>(jsonResponse);
+            results.AddRange(centerStore.Data.stores);
             results = FilterStores(results).ToList();
             checkedZips.Add(zip);
 
@@ -103,8 +120,9 @@ namespace RiteAidWatcher
                     if (checkedZips.Contains(store.zipcode))
                         continue;
 
-                    var zipRoot = JsonConvert.DeserializeObject<StoreRoot>(await FetchStoresForZip(store.zipcode));
-                    results.AddRange(zipRoot.Data.stores);
+                    Thread.Sleep(WaitSecondsBetweenSearch * 1000);
+                    var zipStore = JsonConvert.DeserializeObject<StoreRoot>(await FetchStoresForZip(store.zipcode));
+                    results.AddRange(zipStore.Data.stores);
                     results = FilterStores(results).ToList();
                     checkedZips.Add(zip);
 
@@ -229,13 +247,18 @@ namespace RiteAidWatcher
             }
         }
 
-        private async Task<Slots> Check(Store store)
+        private async Task<Slots?> Check(Store store)
         {
             var jsonResponse = await FetchSlotsForStore(store);
 
             var root = JsonConvert.DeserializeObject<SlotsRoot>(jsonResponse);
 
-            return root.Data.Slots;
+            if (root?.Data?.Slots == null)
+            {
+                Console.WriteLine($"{DateTime.Now:s} : Bad data returned for store {store.storeNumber} {jsonResponse}");
+            }
+
+            return root?.Data?.Slots;
         }
 
         private async Task<string> FetchSlotsForStore(Store store)
@@ -246,7 +269,9 @@ namespace RiteAidWatcher
 
         private async Task<string> FetchJsonResponse(string uri)
         {
-            var response = await HttpClient.GetAsync(uri);
+            var httpFactory = provider.GetService<IHttpClientFactory>();
+            var httpClient = httpFactory.CreateClient("riteaid");
+            var response = await httpClient.GetAsync(uri);
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsStringAsync();
         }
