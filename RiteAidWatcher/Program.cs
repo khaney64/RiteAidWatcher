@@ -259,7 +259,7 @@ namespace RiteAidWatcher
                     {
                         foreach (var activeStore in activeStores)
                         {
-                            Console.WriteLine($"{DateTime.Now:s} : Store {activeStore.storeNumber} still has active slots");
+                            Console.WriteLine($"{DateTime.Now:s} : Store {activeStore.StoreNumber} still has active slots");
                         }
                     }
                 }
