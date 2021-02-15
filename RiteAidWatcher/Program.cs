@@ -124,15 +124,19 @@ namespace RiteAidWatcher
                     if (checkedZips.Contains(store.zipcode))
                         continue;
 
-                    Thread.Sleep(WaitSecondsBetweenSearch * 1000);
+                    Thread.Sleep(250);
+                    //Thread.Sleep(WaitSecondsBetweenSearch * 1000);
                     var zipStore = JsonConvert.DeserializeObject<StoreRoot>(await FetchStoresForZip(store.zipcode));
                     results.AddRange(zipStore.Data.stores);
                     results = FilterStores(results).ToList();
                     checkedZips.Add(zip);
 
                     haveUnchecked = results.Exists(s => !checkedZips.Contains(s.zipcode));
-                    if (results.Count >= MaxStores || !haveUnchecked)
+                    if (results.Count >= MaxStores * 3 || !haveUnchecked)
+                    {
+                        Console.WriteLine($"Stopping at {results.Count} stores, have unchecked is {haveUnchecked}");
                         break;
+                    }
                 }
             }
 
@@ -148,7 +152,7 @@ namespace RiteAidWatcher
                 }
             }
 
-            return results.OrderBy(s => s.milesFromCenter);
+            return results.OrderBy(s => s.milesFromCenter).Take(MaxStores);
         }
 
         private double CalculateDistance(Store centerStore, Store store)
@@ -259,7 +263,7 @@ namespace RiteAidWatcher
                     {
                         foreach (var activeStore in activeStores)
                         {
-                            Console.WriteLine($"{DateTime.Now:s} : Store {activeStore.StoreNumber} still has active slots");
+                            Console.WriteLine($"{DateTime.Now:s} : Store {activeStore.StoreNumber} zip {store.zipcode} still has active slots");
                         }
                     }
                 }
