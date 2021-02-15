@@ -244,6 +244,7 @@ namespace RiteAidWatcher
                 {
                     storeAlert = new AlertData() { StoreNumber = store.storeNumber, ZipCode = store.zipcode, Start = DateTime.Now };
                     activeAlert.ActiveStores.Add(store.storeNumber, storeAlert);
+                    Console.Beep(600, 500);
                     Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} ({store.milesFromCenter:0.00} miles) {store.address} {store.city} {store.zipcode} has slots {slot.Slot1} {slot.Slot2}");
                 }
                 storeAlert.Slot1 = slot.Slot1;
