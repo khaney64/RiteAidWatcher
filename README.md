@@ -1,7 +1,15 @@
 # RiteAidWatcher
 some code to watch stores in specific zip code for open slots for covid vaccines
 
-takes a zip code as command line argument.  It will then build out a list of stores from that zip code, and expand out from those zip codes up to a list of 60 stores (hard coded for now).
+usage:
+  RiteAidWatcher zip [filter=true [maxmiles=999]]
+
+where
+- zip is the zip code to "center" the search on
+- filter determines if filters should be applied (currently hard coded to exclude philadelphia and non PA states)
+- maxm miles lets you limit the search radius - defaults to 999
+
+Code will take the zip code and will then build out a list of stores from that zip code, and expand out from those zip codes up to a list of up to 60 stores (hard coded for now).
 
 Checks for open slots at each of those stores at a reasonable rate.
 

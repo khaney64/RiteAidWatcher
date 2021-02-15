@@ -28,11 +28,13 @@ namespace RiteAidWatcher
         private readonly List<Alert> Alerts;
         private readonly Notifier Notifier;
         private readonly bool Filter;
+        private readonly int MaxMiles = 0;
 
         async static Task Main(string[] args)
         {
             var zip = args[0];
             bool filter = args.Length > 1 ? bool.Parse(args[1]) : true;
+            int maxMiles = args.Length > 2 ? int.Parse(args[2]) : 999;
 
             IConfigurationBuilder builder = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json")
@@ -54,15 +56,16 @@ namespace RiteAidWatcher
 
             provider = services.BuildServiceProvider();
 
-            await new RiteAidWatcher(filter).Watch(zip);
+            await new RiteAidWatcher(filter, maxMiles).Watch(zip);
         }
 
-        private RiteAidWatcher(bool filter)
+        private RiteAidWatcher(bool filter, int maxMiles)
         {
             Alerts = new List<Alert>();
             var configuration = provider.GetService<NotifierConfiguration>();
             Notifier = new Notifier(configuration);
             Filter = filter;
+            MaxMiles = maxMiles;
         }
 
         private async Task Watch(string zip)
@@ -152,7 +155,7 @@ namespace RiteAidWatcher
                 }
             }
 
-            return results.OrderBy(s => s.milesFromCenter).Take(MaxStores);
+            return results.FindAll(s => s.milesFromCenter < MaxMiles).OrderBy(s => s.milesFromCenter).Take(MaxStores);
         }
 
         private double CalculateDistance(Store centerStore, Store store)
@@ -203,8 +206,9 @@ namespace RiteAidWatcher
                 foreach (var store in activeAlert.ActiveStores)
                 {
                     var duration = (store.Value.End.Value - store.Value.Start.Value).TotalMinutes;
-                    Console.WriteLine($"{DateTime.Now:s} : Store {store.Value.StoreNumber} - Start {store.Value.Start.Value:s} End {store.Value.End.Value:s} ({duration:###0} minutes)");
+                    Console.WriteLine($"{DateTime.Now:s} : Ending store {store.Value.StoreNumber} - Started {store.Value.Start.Value:s} Ended {store.Value.End.Value:s} ({duration:###0} minutes)");
                 }
+                Console.WriteLine($"---------------------------------------------------------------");
                 // send an email or some notification here
                 activeAlert.AlertStatus = AlertStatusType.Complete;
             }
