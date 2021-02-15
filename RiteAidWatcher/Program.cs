@@ -16,7 +16,7 @@ namespace RiteAidWatcher
         private static IConfigurationRoot Configuration;
         private static IServiceProvider provider;
 
-        const int WaitSecondsBetweenSearch = 3;
+        const int WaitSecondsBetweenSearch = 1;
         const int WaitSecondsBetweenStores = 1;
         const int WaitSecondsBetweenChecks = 5;
         const int MaxStores = 60;
@@ -105,6 +105,7 @@ namespace RiteAidWatcher
         /// <returns></returns>
         private async Task<IEnumerable<Store>> BuildStores(string zip)
         {
+            Console.WriteLine($"{DateTime.Now:s} : Building store list from {zip}");
             var results = new List<Store>();
             var checkedZips = new List<string>();
 
@@ -245,14 +246,25 @@ namespace RiteAidWatcher
             }
             else
             {
+                var removed = false;
                 // see if this store was active - if so, mark the end date
                 if (storeAlert != null)
                 {
                     if (storeAlert.End == null)
                     {
+                        removed = true;
                         Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} no longer has slots");
                     }
                     storeAlert.End = DateTime.Now;
+
+                    var activeStores = activeAlert.ActiveStores.Values.ToList().FindAll(a => a.End == null);
+                    if (removed && activeStores.Count > 0)
+                    {
+                        foreach (var activeStore in activeStores)
+                        {
+                            Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} still has active slots");
+                        }
+                    }
                 }
             }
         }
