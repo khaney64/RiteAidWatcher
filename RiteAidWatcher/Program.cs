@@ -238,7 +238,7 @@ namespace RiteAidWatcher
 
                 if (storeAlert == null)
                 {
-                    storeAlert = new AlertData() { StoreNumber = store.storeNumber, Start = DateTime.Now };
+                    storeAlert = new AlertData() { StoreNumber = store.storeNumber, ZipCode = store.zipcode, Start = DateTime.Now };
                     activeAlert.ActiveStores.Add(store.storeNumber, storeAlert);
                     Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} ({store.milesFromCenter:0.00} miles) {store.address} {store.city} {store.zipcode} has slots {slot.Slot1} {slot.Slot2}");
                 }
@@ -263,7 +263,7 @@ namespace RiteAidWatcher
                     {
                         foreach (var activeStore in activeStores)
                         {
-                            Console.WriteLine($"{DateTime.Now:s} : Store {activeStore.StoreNumber} zip {store.zipcode} still has active slots");
+                            Console.WriteLine($"{DateTime.Now:s} : Store {activeStore.StoreNumber} zip {activeStore.ZipCode} still has active slots");
                         }
                     }
                 }

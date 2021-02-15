@@ -8,6 +8,8 @@ namespace RiteAidWatcher
     {
         public int StoreNumber { get; set; }
 
+        public string ZipCode { get; set; }
+
         public bool Slot1 { get; set; }
 
         public bool Slot2 { get; set; }
