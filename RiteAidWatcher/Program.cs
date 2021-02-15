@@ -112,10 +112,7 @@ namespace RiteAidWatcher
             var jsonResponse = await FetchStoresForZip(zip);
             var centerStore = JsonConvert.DeserializeObject<StoreRoot>(jsonResponse);
             results.AddRange(centerStore.Data.stores);
-            if (Filter)
-            {
-                results = FilterStores(results).ToList();
-            }
+            results = FilterStores(results).ToList();
             checkedZips.Add(zip);
 
             var haveUnchecked = results.Exists(s => !checkedZips.Contains(s.zipcode));
@@ -130,10 +127,7 @@ namespace RiteAidWatcher
                     Thread.Sleep(WaitSecondsBetweenSearch * 1000);
                     var zipStore = JsonConvert.DeserializeObject<StoreRoot>(await FetchStoresForZip(store.zipcode));
                     results.AddRange(zipStore.Data.stores);
-                    if (Filter)
-                    {
-                        results = FilterStores(results).ToList();
-                    }
+                    results = FilterStores(results).ToList();
                     checkedZips.Add(zip);
 
                     haveUnchecked = results.Exists(s => !checkedZips.Contains(s.zipcode));
@@ -172,11 +166,14 @@ namespace RiteAidWatcher
 
         private IEnumerable<Store> FilterStores(List<Store> results)
         {
-            // remove Philadelphia stores
-            results.RemoveAll(s => s.city.ToLower() == "philadelphia");
+            if (Filter)
+            {
+                // remove Philadelphia stores
+                results.RemoveAll(s => s.city.ToLower() == "philadelphia");
 
-            // remove non PA stores
-            results.RemoveAll(s => s.state.ToLower() != "pa");
+                // remove non PA stores
+                results.RemoveAll(s => s.state.ToLower() != "pa");
+            }
 
             // there may be overlap by zip, return unique list of stores
             return results.GroupBy(s => s.storeNumber).Select(s => s.First());
@@ -262,7 +259,7 @@ namespace RiteAidWatcher
                     {
                         foreach (var activeStore in activeStores)
                         {
-                            Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} still has active slots");
+                            Console.WriteLine($"{DateTime.Now:s} : Store {activeStore.storeNumber} still has active slots");
                         }
                     }
                 }
