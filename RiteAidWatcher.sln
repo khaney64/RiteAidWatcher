@@ -3,7 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30503.244
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RiteAidWatcher", "RiteAidWatcher\RiteAidWatcher.csproj", "{4FFC9743-515E-4AC6-8EDD-A98E19A20C07}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RiteAidWatcher", "RiteAidWatcher\RiteAidWatcher.csproj", "{4FFC9743-515E-4AC6-8EDD-A98E19A20C07}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RiteAidChecker", "Checker\RiteAidChecker.csproj", "{90C02C03-0BF7-4ABA-B988-0AF38DCC7499}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{74B36A9F-1A3E-4BAC-AEB2-8BC8711C87C8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,14 @@ Global
 		{4FFC9743-515E-4AC6-8EDD-A98E19A20C07}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4FFC9743-515E-4AC6-8EDD-A98E19A20C07}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4FFC9743-515E-4AC6-8EDD-A98E19A20C07}.Release|Any CPU.Build.0 = Release|Any CPU
+		{90C02C03-0BF7-4ABA-B988-0AF38DCC7499}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{90C02C03-0BF7-4ABA-B988-0AF38DCC7499}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{90C02C03-0BF7-4ABA-B988-0AF38DCC7499}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{90C02C03-0BF7-4ABA-B988-0AF38DCC7499}.Release|Any CPU.Build.0 = Release|Any CPU
+		{74B36A9F-1A3E-4BAC-AEB2-8BC8711C87C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{74B36A9F-1A3E-4BAC-AEB2-8BC8711C87C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{74B36A9F-1A3E-4BAC-AEB2-8BC8711C87C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{74B36A9F-1A3E-4BAC-AEB2-8BC8711C87C8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RiteAidChecker;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -17,5 +18,7 @@ namespace RiteAidWatcher
         public DateTime? Start { get; set; }
 
         public DateTime? End { get; set; }
+
+        public Checker Checker { get; set; }
     }
 }

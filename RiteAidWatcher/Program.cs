@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
+using RiteAidChecker;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -97,7 +98,7 @@ namespace RiteAidWatcher
                 //Console.WriteLine($"{DateTime.Now:s} : sleeping for {WaitSecondsBetweenChecks} seconds");
                 CheckAlerts(haveActive);
                 Thread.Sleep(WaitSecondsBetweenChecks * 1000);
-            } while(true);
+            } while (true);
         }
 
         /// <summary>
@@ -242,33 +243,43 @@ namespace RiteAidWatcher
 
                 if (storeAlert == null)
                 {
-                    storeAlert = new AlertData() { StoreNumber = store.storeNumber, ZipCode = store.zipcode, Start = DateTime.Now };
-                    activeAlert.ActiveStores.Add(store.storeNumber, storeAlert);
-                    Console.Beep(600, 500);
-                    Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} ({store.milesFromCenter:0.00} miles) {store.address} {store.city} {store.zipcode} has slots {slot.Slot1} {slot.Slot2}");
-                }
-                storeAlert.Slot1 = slot.Slot1;
-                storeAlert.Slot2 = slot.Slot2;
-            }
-            else
-            {
-                var removed = false;
-                // see if this store was active - if so, mark the end date
-                if (storeAlert != null)
-                {
-                    if (storeAlert.End == null)
+                    var checkStatus = CheckStore(store);
+                    if (checkStatus.slots)
                     {
-                        removed = true;
-                        Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} no longer has slots");
+                        storeAlert = new AlertData() { StoreNumber = store.storeNumber, ZipCode = store.zipcode, Start = DateTime.Now, Checker = checkStatus.checker };
+                        activeAlert.ActiveStores.Add(store.storeNumber, storeAlert);
+                        Console.Beep(600, 500);
+                        Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} ({store.milesFromCenter:0.00} miles) {store.address} {store.city} {store.zipcode} has slots {slot.Slot1} {slot.Slot2}");
+                        storeAlert.Slot1 = slot.Slot1;
+                        storeAlert.Slot2 = slot.Slot2;
                     }
-                    storeAlert.End = DateTime.Now;
-
-                    var activeStores = activeAlert.ActiveStores.Values.ToList().FindAll(a => a.End == null);
-                    if (removed && activeStores.Count > 0)
+                    else
                     {
-                        foreach (var activeStore in activeStores)
+                        Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} ({store.milesFromCenter:0.00} miles) {store.zipcode} reported slots but none found");
+                    }
+                }
+                else
+                {
+                    var removed = false;
+                    // see if this store was active - if so, mark the end date
+                    if (storeAlert != null)
+                    {
+                        if (storeAlert.End == null)
                         {
-                            Console.WriteLine($"{DateTime.Now:s} : Store {activeStore.StoreNumber} zip {activeStore.ZipCode} still has active slots");
+                            removed = true;
+                            storeAlert.Checker?.Dispose();
+                            storeAlert.Checker = null;
+                            Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} no longer has slots");
+                        }
+                        storeAlert.End = DateTime.Now;
+
+                        var activeStores = activeAlert.ActiveStores.Values.ToList().FindAll(a => a.End == null);
+                        if (removed && activeStores.Count > 0)
+                        {
+                            foreach (var activeStore in activeStores)
+                            {
+                                Console.WriteLine($"{DateTime.Now:s} : Store {activeStore.StoreNumber} zip {activeStore.ZipCode} still has active slots");
+                            }
                         }
                     }
                 }
@@ -304,5 +315,40 @@ namespace RiteAidWatcher
             return await response.Content.ReadAsStringAsync();
         }
 
+        private (bool slots, Checker checker) CheckStore(Store store)
+        {
+            var data = new RiteAidData()
+            {
+                BirthDate = "01/01/2000",
+                City = store.city,
+                State = store.state,
+                Zip = store.zipcode,
+                Condition = ConditionType.WeakendImmuneSystem,
+                Occupation = OccupationType.NoneOfTheAbove
+            };
+
+            var checker = new Checker(data);
+            try
+            {
+                var slots = checker.Check(store.zipcode, store.storeNumber.ToString());
+                if (!slots)
+                {
+                    checker.Dispose();
+                    checker = null;
+                    return (false, null );
+                }
+                else
+                {
+                    return (true, checker);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine(e.Message);
+                Console.Error.WriteLine(e.StackTrace);
+                checker.Dispose();
+                return (false, null);
+            }
+        }
     }
 }
