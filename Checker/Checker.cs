@@ -31,7 +31,7 @@ namespace RiteAidChecker
             var homeURL = "https://www.riteaid.com/pharmacy/covid-qualifier";
             driver.ExecuteJavaScript("document.body.style.zoom='50%'");
             driver.Navigate().GoToUrl(homeURL);
-            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(15));
+            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
 
             // Birth Date
             wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@id=\"dateOfBirth\"]")));
@@ -142,7 +142,7 @@ namespace RiteAidChecker
 
         private IWebElement ScrollElementIntoView(string xpath, bool clickable = false)
         {
-            var wait = new WebDriverWait(driver, System.TimeSpan.FromSeconds(15));
+            var wait = new WebDriverWait(driver, System.TimeSpan.FromSeconds(20));
             var element = wait.Until(ExpectedConditions.ElementIsVisible(By.XPath(xpath)));
             ((IJavaScriptExecutor)driver).ExecuteScript("window.scroll(" + element.Location.X + "," + (element.Location.Y - 200) + ");");
 
@@ -157,7 +157,7 @@ namespace RiteAidChecker
 
         private IWebElement ScrollElementIntoView(By by, bool clickable = false)
         {
-            var wait = new WebDriverWait(driver, System.TimeSpan.FromSeconds(15));
+            var wait = new WebDriverWait(driver, System.TimeSpan.FromSeconds(20));
             var element = wait.Until(ExpectedConditions.ElementIsVisible(by));
             ((IJavaScriptExecutor)driver).ExecuteScript("window.scroll(" + element.Location.X + "," + (element.Location.Y - 200) + ");");
 

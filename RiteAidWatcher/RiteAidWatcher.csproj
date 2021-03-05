@@ -6,6 +6,11 @@
     <UserSecretsId>ebc89ac7-9e5d-432b-ae61-dfe5c9b92c03</UserSecretsId>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1-beta1" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="5.0.0" />

@@ -2,7 +2,7 @@
   "profiles": {
     "RiteAidWatcher": {
       "commandName": "Project",
-      "commandLineArgs": "***REMOVED***"
+      "commandLineArgs": "***REMOVED*** true 50 false"
     }
   }
 }

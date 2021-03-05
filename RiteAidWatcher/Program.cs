@@ -30,12 +30,14 @@ namespace RiteAidWatcher
         private readonly Notifier Notifier;
         private readonly bool Filter;
         private readonly int MaxMiles = 0;
+        private readonly bool BrowserCheck;
 
         async static Task Main(string[] args)
         {
             var zip = args[0];
             bool filter = args.Length > 1 ? bool.Parse(args[1]) : true;
             int maxMiles = args.Length > 2 ? int.Parse(args[2]) : 999;
+            bool browserCheck = args.Length > 3 ? bool.Parse(args[3]) : false;
 
             IConfigurationBuilder builder = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json")
@@ -57,16 +59,17 @@ namespace RiteAidWatcher
 
             provider = services.BuildServiceProvider();
 
-            await new RiteAidWatcher(filter, maxMiles).Watch(zip);
+            await new RiteAidWatcher(filter, maxMiles, browserCheck).Watch(zip);
         }
 
-        private RiteAidWatcher(bool filter, int maxMiles)
+        private RiteAidWatcher(bool filter, int maxMiles, bool browserCheck)
         {
             Alerts = new List<Alert>();
             var configuration = provider.GetService<NotifierConfiguration>();
             Notifier = new Notifier(configuration);
             Filter = filter;
             MaxMiles = maxMiles;
+            BrowserCheck = browserCheck;
         }
 
         private async Task Watch(string zip)
@@ -131,6 +134,11 @@ namespace RiteAidWatcher
                     Thread.Sleep(250);
                     //Thread.Sleep(WaitSecondsBetweenSearch * 1000);
                     var zipStore = JsonConvert.DeserializeObject<StoreRoot>(await FetchStoresForZip(store.zipcode));
+                    if (zipStore.Data == null)
+                    {
+                        Console.WriteLine($"zip {store.zipcode} returned no data - skipping");
+                        continue;
+                    }
                     results.AddRange(zipStore.Data.stores);
                     results = FilterStores(results).ToList();
                     checkedZips.Add(zip);
@@ -243,10 +251,19 @@ namespace RiteAidWatcher
 
                 if (storeAlert == null)
                 {
-                    var checkStatus = CheckStore(store);
-                    if (checkStatus.slots)
+                    var hasSlots = slot.Slot1 || slot.Slot2;
+                    Checker checker = null;
+                    if (BrowserCheck)
                     {
-                        storeAlert = new AlertData() { StoreNumber = store.storeNumber, ZipCode = store.zipcode, Start = DateTime.Now, Checker = checkStatus.checker };
+                        Console.Beep(600, 200);
+                        var checkStatus = CheckStore(store);
+                        hasSlots = checkStatus.slots;
+                        checker = checkStatus.checker;
+                    }
+
+                    if (hasSlots)
+                    {
+                        storeAlert = new AlertData() { StoreNumber = store.storeNumber, ZipCode = store.zipcode, Start = DateTime.Now, Checker = checker };
                         activeAlert.ActiveStores.Add(store.storeNumber, storeAlert);
                         Console.Beep(600, 500);
                         Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} ({store.milesFromCenter:0.00} miles) {store.address} {store.city} {store.zipcode} has slots {slot.Slot1} {slot.Slot2}");
@@ -267,7 +284,13 @@ namespace RiteAidWatcher
                         if (storeAlert.End == null)
                         {
                             removed = true;
-                            storeAlert.Checker?.Dispose();
+                            try
+                            {
+                                storeAlert.Checker?.Dispose();
+                            }
+                            catch (Exception)
+                            {
+                            }
                             storeAlert.Checker = null;
                             Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} no longer has slots");
                         }
@@ -327,6 +350,7 @@ namespace RiteAidWatcher
                 Occupation = OccupationType.NoneOfTheAbove
             };
 
+            Console.WriteLine($"{DateTime.Now:s} : Checking store {store.storeNumber} ({store.milesFromCenter:0.00} miles) {store.address} {store.city} {store.zipcode} with browser");
             var checker = new Checker(data);
             try
             {
