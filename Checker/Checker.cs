@@ -26,6 +26,83 @@ namespace RiteAidChecker
             driver = new ChromeDriver(options);
         }
 
+        public static void Initializer(ChromeDriver browser, RiteAidData data)
+        {
+            var homeURL = "https://www.riteaid.com/pharmacy/covid-qualifier";
+            browser.ExecuteJavaScript("document.body.style.zoom='50%'");
+            browser.Navigate().GoToUrl(homeURL);
+            WebDriverWait wait = new WebDriverWait(browser, TimeSpan.FromSeconds(20));
+
+            // Birth Date
+            wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@id=\"dateOfBirth\"]")));
+            browser.FindElement(By.XPath("//*/input[@id=\"dateOfBirth\"]")).SendKeys(data.BirthDate);
+
+            // Zip
+            browser.FindElement(By.XPath("//*[@id=\"zip\"]")).Click();
+
+            // Occupation
+            var occupationDropdown = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//*[@id=\"Occupation\"]")));
+            Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
+            occupationDropdown.Click();
+
+            wait.Until(ExpectedConditions.ElementExists(By.CssSelector("div[class=\"form__row typeahead__container result\"]")));
+            occupationDropdown.SendKeys(data.Occupation.Format());
+
+            var occupationItem = By.XPath("//*[@id=\"eligibility\"]/div/div[2]/div[1]/div/div/ul/li/a");
+
+            var item = wait.Until(ExpectedConditions.ElementToBeClickable(occupationItem));
+            item.Click();
+
+            // City
+            browser.FindElement(By.XPath("//*[@id=\"city\"]")).SendKeys(data.City);
+
+            // Medical Condition
+            browser.ScrollElementIntoView("//*[@id=\"mediconditions\"]", clickable: true);
+            var conditionDropdown = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//*[@id=\"mediconditions\"]")));
+            Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
+            conditionDropdown.Click();
+            wait.Until(ExpectedConditions.ElementExists(By.CssSelector("div[class=\"form__row typeahead__container result\"]")));
+            conditionDropdown.SendKeys(data.Condition.Format());
+
+            var conditionItem = By.XPath("//*[@id=\"eligibility\"]/div/div[2]/div[2]/div/div/ul/li/a");
+
+            item = wait.Until(ExpectedConditions.ElementToBeClickable(conditionItem));
+            item.Click();
+
+            // State
+            var stateBox = browser.ScrollElementIntoView("//*[@id=\"eligibility_state\"]", clickable: true);
+            Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
+            stateBox.Click();
+            // wait for this div to change
+            wait.Until(ExpectedConditions.ElementExists(By.CssSelector("div[class=\"form__row typeahead__container result\"]")));
+            browser.FindElement(By.XPath("//*[@id=\"eligibility_state\"]")).SendKeys(data.State + "\t");
+
+            // Zip
+            browser.FindElement(By.XPath("//*[@id=\"zip\"]")).SendKeys(data.Zip + "\t");
+
+            // Next
+            var nextButton = browser.ScrollElementIntoView("//*[@id=\"continue\"]", clickable: true);
+            nextButton.Click();
+
+            // Continue
+            Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
+            browser.ScrollElementIntoView("//*[@id=\"learnmorebttn\"]", clickable: true);
+            var continueButton = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//*[@id=\"learnmorebttn\"]")));
+            continueButton.Click();
+
+        }
+
+        public static void Resetter(ChromeDriver browser)
+        {
+            var schedulerUrl = "https://www.riteaid.com/pharmacy/apt-scheduler";
+            browser.ExecuteJavaScript("document.body.style.zoom='50%'");
+            browser.Navigate().GoToUrl(schedulerUrl);
+            WebDriverWait wait = new WebDriverWait(browser, TimeSpan.FromSeconds(20));
+
+            var zipBox = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//*[@id=\"covid-store-search\"]")));
+            zipBox.Clear();
+        }
+
         public bool Check(string zip, string store)
         {
             var homeURL = "https://www.riteaid.com/pharmacy/covid-qualifier";
