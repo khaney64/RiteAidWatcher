@@ -77,5 +77,17 @@ namespace RiteAidChecker
             }
         }
 
+        public static bool IsAlertPresent(this ChromeDriver driver)
+        {
+            try
+            {
+                driver.SwitchTo().Alert();
+                return true;
+            } // try
+            catch (Exception)
+            {
+                return false;
+            } // catch
+        }
     }
 }

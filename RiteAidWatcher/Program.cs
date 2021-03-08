@@ -22,7 +22,7 @@ namespace RiteAidWatcher
         const int WaitSecondsBetweenStores = 1;
         const int WaitSecondsBetweenChecks = 5;
         const int MaxStores = 60;
-        const int MaxBrowsers = 5;
+        const int MaxBrowsers = 2;
 
         const string BaseAddress = "https://www.riteaid.com";
         const string FetchStoresTemplate = "/services/ext/v2/stores/getStores?address={0}&attrFilter=PREF-112&fetchMechanismVersion=2&radius=50";
@@ -85,7 +85,7 @@ namespace RiteAidWatcher
                     Occupation = OccupationType.NoneOfTheAbove
                 };
 
-                browserCache = new BrowserCache(5, data, Checker.Initializer, Checker.Resetter);
+                browserCache = new BrowserCache(MaxBrowsers, data, Checker.Initializer, Checker.Resetter);
                 browserCache.Preload();
 
             }

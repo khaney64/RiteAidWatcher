@@ -52,7 +52,6 @@ namespace RiteAidChecker
             if (browser == null)
                 return;
 
-            browser.Navigate().Refresh();
             resetter(browser);
             availableStack.Push(browser);
         }

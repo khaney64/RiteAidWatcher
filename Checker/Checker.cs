@@ -4,7 +4,10 @@ using OpenQA.Selenium.Interactions;
 using OpenQA.Selenium.Support.Extensions;
 using OpenQA.Selenium.Support.UI;
 using System;
+using System.ComponentModel;
+using System.Data;
 using System.Threading;
+using Newtonsoft.Json.Serialization;
 using ExpectedConditions = SeleniumExtras.WaitHelpers.ExpectedConditions;
 
 namespace RiteAidChecker
@@ -14,7 +17,7 @@ namespace RiteAidChecker
         public static void Initializer(ChromeDriver browser, RiteAidData data)
         {
             var homeURL = "https://www.riteaid.com/pharmacy/covid-qualifier";
-            browser.ExecuteJavaScript("document.body.style.zoom='50%'");
+            //browser.ExecuteJavaScript("document.body.style.zoom='50%'");
             browser.Navigate().GoToUrl(homeURL);
             WebDriverWait wait = new WebDriverWait(browser, TimeSpan.FromSeconds(20));
 
@@ -80,8 +83,15 @@ namespace RiteAidChecker
         public static void Resetter(ChromeDriver browser)
         {
             var schedulerUrl = "https://www.riteaid.com/pharmacy/apt-scheduler";
-            browser.ExecuteJavaScript("document.body.style.zoom='50%'");
-            browser.Navigate().GoToUrl(schedulerUrl);
+            browser.Navigate().Refresh();
+            if (browser.IsAlertPresent())
+            {
+                browser.SwitchTo().Alert();
+                browser.SwitchTo().Alert().Accept();
+                browser.SwitchTo().DefaultContent();
+            }
+            //browser.Navigate().GoToUrl(schedulerUrl);
+            //browser.ExecuteJavaScript("document.body.style.zoom='50%'");
             WebDriverWait wait = new WebDriverWait(browser, TimeSpan.FromSeconds(20));
 
             var zipBox = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//*[@id=\"covid-store-search\"]")));
@@ -95,31 +105,67 @@ namespace RiteAidChecker
             // Zip
             var zipBox = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//*[@id=\"covid-store-search\"]")));
             zipBox.Clear();
-            zipBox.SendKeys(zip);
+            zipBox.SendKeys(zip + Keys.Enter);
 
             // Find
-            var findButton = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//*[@id=\"btn-find-store\"]")));
-            findButton.Click();
+            //var findButton = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//*[@id=\"btn-find-store\"]")));
+            //findButton.Click();
 
             // Store check
             var buttonBy = By.CssSelector($"a[class*=\"covid-store__store__anchor--unselected\"][data-loc-id=\"{store}\"]");
+            if (driver.IsElementPresent(buttonBy))
+            {
+                var foo = 1;
+            }
             var storeButton = wait.Until(ExpectedConditions.ElementToBeClickable(buttonBy));
             driver.ScrollElementIntoView(buttonBy, clickable: true);
             Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
-            storeButton.Click();
+            //storeButton.Click();
+            storeButton.SendKeys(Keys.Enter);
 
             // Next
-            var nextButton = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//*[@id=\"continue\"]")));
+            Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
+            var nextByXpath = By.XPath("//*[@id=\"continue\"]");
+
+            wait.Until(ExpectedConditions.ElementExists(nextByXpath));
+            var nextButton = wait.Until(ExpectedConditions.ElementToBeClickable(nextByXpath));
             nextButton.Click();
 
-            Thread.Sleep(1000);
+            Thread.Sleep(2000);
+
             // if it fails slots test it'll display a warning now
             if (driver.IsElementPresent(By.CssSelector("div[class=\"covid-store__slot-template\"][data-template-id=\"covid-store__slot-template-id\"][style=\"\"]")))
             {
                 return false;
             }
 
-            return true;
+            var covidTimeByCss = By.CssSelector("input[type=\"radio\"][class=\"covid-time__radio\"]");
+            if (driver.IsElementPresent(covidTimeByCss))
+            {
+                var radio = wait.Until(ExpectedConditions.ElementToBeClickable(covidTimeByCss));
+                radio.Click();
+
+                if (driver.IsElementPresent(nextByXpath))
+                {
+                    int foo = 1;
+                }
+
+                driver.ScrollElementIntoView(nextByXpath);
+                nextButton = wait.Until(ExpectedConditions.ElementToBeClickable(nextByXpath));
+                nextButton.Click();
+
+                Thread.Sleep(1000);
+                // if slot it taken, it'll show a warning now instead of advancing
+                if (driver.IsElementPresent(By.CssSelector("div[class=\"covid-scheduler__validation-section covid-scheduler__invalid\"]")))
+                {
+                    return false;
+                }
+
+
+                return true;
+            }
+
+            return false;
         }
     }
 }
