@@ -1,4 +1,5 @@
-﻿using RiteAidChecker;
+﻿using OpenQA.Selenium.Chrome;
+using RiteAidChecker;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -19,6 +20,6 @@ namespace RiteAidWatcher
 
         public DateTime? End { get; set; }
 
-        public Checker Checker { get; set; }
+        public ChromeDriver Browser { get; set; }
     }
 }

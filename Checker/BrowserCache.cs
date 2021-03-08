@@ -7,7 +7,8 @@ namespace RiteAidChecker
 {
     public class BrowserCache
     {
-        private readonly Stack<ChromeDriver> stack;
+        private readonly Stack<ChromeDriver> availableStack;
+        private readonly List<ChromeDriver> holdList;
         private readonly int maxBrowsers;
         private readonly RiteAidData data;
         private readonly Action<ChromeDriver,RiteAidData> initializer;
@@ -16,7 +17,8 @@ namespace RiteAidChecker
 
         public BrowserCache(int browsers, RiteAidData data, Action<ChromeDriver,RiteAidData> initializer, Action<ChromeDriver> resetter)
         {
-            stack = new Stack<ChromeDriver>(browsers);
+            availableStack = new Stack<ChromeDriver>(browsers);
+            holdList = new List<ChromeDriver>();
             maxBrowsers = browsers;
             this.data = data;
             this.initializer = initializer;
@@ -25,7 +27,7 @@ namespace RiteAidChecker
 
         public ChromeDriver Pop()
         {
-            if (!stack.TryPop(out var browser))
+            if (!availableStack.TryPop(out var browser))
             {
                 if (loadedBrowsers >= maxBrowsers)
                 {
@@ -47,9 +49,37 @@ namespace RiteAidChecker
 
         public void Push(ChromeDriver browser)
         {
+            if (browser == null)
+                return;
+
+            browser.Navigate().Refresh();
             resetter(browser);
-            stack.Push(browser);
+            availableStack.Push(browser);
         }
 
+        public void Hold(ChromeDriver browser)
+        {
+            holdList.Add(browser);
+        }
+
+        public bool Release(ChromeDriver browser)
+        {
+            return holdList.Remove(browser);
+        }
+
+        public void Preload()
+        {
+            ChromeDriver browser = null;
+            var browsers = new List<ChromeDriver>();
+            do
+            {
+                browser = Pop();
+                if (browser != null)
+                {
+                    browsers.Add(browser);
+                }
+            } while (browser != null);
+            browsers.ForEach(b => Push(b));
+        }
     }
 }

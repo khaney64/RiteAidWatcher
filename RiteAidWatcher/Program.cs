@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
+using OpenQA.Selenium.Chrome;
 using RiteAidChecker;
 using System;
 using System.Collections.Generic;
@@ -21,6 +22,7 @@ namespace RiteAidWatcher
         const int WaitSecondsBetweenStores = 1;
         const int WaitSecondsBetweenChecks = 5;
         const int MaxStores = 60;
+        const int MaxBrowsers = 5;
 
         const string BaseAddress = "https://www.riteaid.com";
         const string FetchStoresTemplate = "/services/ext/v2/stores/getStores?address={0}&attrFilter=PREF-112&fetchMechanismVersion=2&radius=50";
@@ -31,6 +33,7 @@ namespace RiteAidWatcher
         private readonly bool Filter;
         private readonly int MaxMiles = 0;
         private readonly bool BrowserCheck;
+        private readonly BrowserCache browserCache;
 
         async static Task Main(string[] args)
         {
@@ -70,6 +73,22 @@ namespace RiteAidWatcher
             Filter = filter;
             MaxMiles = maxMiles;
             BrowserCheck = browserCheck;
+            if (browserCheck)
+            {
+                var data = new RiteAidData()
+                {
+                    BirthDate = "01/01/2000",
+                    City = "***REMOVED***",
+                    State = "Pennsylvania",
+                    Zip = "***REMOVED***",
+                    Condition = ConditionType.WeakendImmuneSystem,
+                    Occupation = OccupationType.NoneOfTheAbove
+                };
+
+                browserCache = new BrowserCache(5, data, Checker.Initializer, Checker.Resetter);
+                browserCache.Preload();
+
+            }
         }
 
         private async Task Watch(string zip)
@@ -252,18 +271,18 @@ namespace RiteAidWatcher
                 if (storeAlert == null)
                 {
                     var hasSlots = slot.Slot1 || slot.Slot2;
-                    Checker checker = null;
+                    ChromeDriver browser = null;
                     if (BrowserCheck)
                     {
                         Console.Beep(600, 200);
                         var checkStatus = CheckStore(store);
                         hasSlots = checkStatus.slots;
-                        checker = checkStatus.checker;
+                        browser = checkStatus.browser;
                     }
 
                     if (hasSlots)
                     {
-                        storeAlert = new AlertData() { StoreNumber = store.storeNumber, ZipCode = store.zipcode, Start = DateTime.Now, Checker = checker };
+                        storeAlert = new AlertData() { StoreNumber = store.storeNumber, ZipCode = store.zipcode, Start = DateTime.Now, Browser = browser };
                         activeAlert.ActiveStores.Add(store.storeNumber, storeAlert);
                         Console.Beep(600, 500);
                         Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} ({store.milesFromCenter:0.00} miles) {store.address} {store.city} {store.zipcode} has slots {slot.Slot1} {slot.Slot2}");
@@ -286,12 +305,12 @@ namespace RiteAidWatcher
                             removed = true;
                             try
                             {
-                                storeAlert.Checker?.Dispose();
+                                browserCache.Push(storeAlert.Browser);
                             }
                             catch (Exception)
                             {
                             }
-                            storeAlert.Checker = null;
+                            storeAlert.Browser = null;
                             Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} no longer has slots");
                         }
                         storeAlert.End = DateTime.Now;
@@ -338,39 +357,36 @@ namespace RiteAidWatcher
             return await response.Content.ReadAsStringAsync();
         }
 
-        private (bool slots, Checker checker) CheckStore(Store store)
+        private (bool slots, ChromeDriver browser) CheckStore(Store store)
         {
-            var data = new RiteAidData()
-            {
-                BirthDate = "01/01/2000",
-                City = store.city,
-                State = store.state,
-                Zip = store.zipcode,
-                Condition = ConditionType.WeakendImmuneSystem,
-                Occupation = OccupationType.NoneOfTheAbove
-            };
-
             Console.WriteLine($"{DateTime.Now:s} : Checking store {store.storeNumber} ({store.milesFromCenter:0.00} miles) {store.address} {store.city} {store.zipcode} with browser");
-            var checker = new Checker(data);
+
+            var browser = browserCache.Pop();
+            if (browser == null)
+            {
+                Console.WriteLine($"{DateTime.Now:s} : No browsers remaining to be able to check");
+                return (true, null);
+            }
+
             try
             {
-                var slots = checker.Check(store.zipcode, store.storeNumber.ToString());
+                var slots = Checker.Check(store.zipcode, store.storeNumber.ToString(), browser);
                 if (!slots)
                 {
-                    checker.Dispose();
-                    checker = null;
+                    browserCache.Push(browser);
                     return (false, null );
                 }
                 else
                 {
-                    return (true, checker);
+                    browserCache.Hold(browser);
+                    return (true, browser);
                 }
             }
             catch (Exception e)
             {
                 Console.Error.WriteLine(e.Message);
                 Console.Error.WriteLine(e.StackTrace);
-                checker.Dispose();
+                browserCache.Push(browser);
                 return (false, null);
             }
         }

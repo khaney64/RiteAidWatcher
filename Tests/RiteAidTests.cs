@@ -20,10 +20,9 @@ namespace RiteAidTests
                 Occupation = OccupationType.NoneOfTheAbove
             };
 
-            using (var checker = new Checker(data))
-            {
-                var available = checker.Check("19406", "11158");
-            }
+            var cache = new BrowserCache(1, data, Checker.Initializer, Checker.Resetter);
+            var browser = cache.Pop();
+            var available = Checker.Check("19406", "11158", browser);
         }
 
     }

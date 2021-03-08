@@ -63,5 +63,19 @@ namespace RiteAidChecker
 
             return element;
         }
+
+        public static bool IsElementPresent(this ChromeDriver driver, By by)
+        {
+            try
+            {
+                driver.FindElement(by);
+                return true;
+            }
+            catch (NoSuchElementException)
+            {
+                return false;
+            }
+        }
+
     }
 }
