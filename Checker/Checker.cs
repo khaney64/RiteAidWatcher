@@ -99,7 +99,7 @@ namespace RiteAidChecker
             zipBox.Clear();
         }
 
-        public static (bool haveSlots, string info) Check(string zip, string store, ChromeDriver driver)
+        public static (bool haveSlots, string info) Check(string zip, string store, RiteAidData data, ChromeDriver driver)
         {
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
 
@@ -133,7 +133,7 @@ namespace RiteAidChecker
             // if it fails slots test it'll display a warning now
             if (driver.IsElementPresent(By.CssSelector("div[class=\"covid-store__slot-template\"][data-template-id=\"covid-store__slot-template-id\"][style=\"\"]")))
             {
-                return (false, "no slots");
+                return (false, "no slots - store");
             }
 
             var covidTimeByCss = By.CssSelector("input[type=\"radio\"][class=\"covid-time__radio\"]");
@@ -146,6 +146,7 @@ namespace RiteAidChecker
 
                 var nextByCss = By.CssSelector("button[id=\"continue\"][class*=\"covid-scheduler__contnuebtn form-btns--continue\"]");
                 nextButton = driver.ScrollElementIntoView(nextByCss, clickable:true);
+                Thread.Sleep(1000);
                 nextButton.Click();
 
                 Thread.Sleep(1000);
@@ -156,10 +157,227 @@ namespace RiteAidChecker
                     continue;
                 }
 
-                return (true, "");
+                if (PatientInfo(driver, data))
+                {
+                    return (true, "patient info");
+                }
+
+                Console.Beep(200,500); //debug
+                return (true, $"({covidTimes.Count})");
             }
 
-            return (false, covidTimes.Any() ? "found slots" : "no slots");
+            return (false, covidTimes.Any() ? $"found slots ({covidTimes.Count})" : $"no slots - scheduler");
+        }
+
+        private static bool PatientInfo(ChromeDriver driver, RiteAidData data)
+        {
+            /*
+             * look for guardian checkbox - //*[@id="ptHasGuardian"]
+             * find and fill in
+             *   first name : //*[@id="firstName"]
+             *   last name : //*[@id="lastName"]
+             *   date of birth : //*[@id="dateOfBirth"]
+             *   mobile phone : //*[@id="phone"]
+             *   street address : //*[@id="addr1"]
+             *   email : //*[@id="email"]
+             *   city : //*[@id="city"]
+             *   state (dropdown) : //*[@id="patient_state"]  element 0 after filling in state = //*[@id="patient-info"]/div[7]/div[1]/div/div/ul/li
+             *   zip : //*[@id="zip"]
+             *   sms reminder checkbox : //*[@id="sendReminderSMS"]
+             *   email reminder checkbox : //*[@id="sendReminderEmail"]
+             *   pcp slider : //*[@id="physician"] (click to disable so we don't have to fill it out)
+             *   next button : //*[@id="continue"]
+             *
+             * if successful, will go to medical information
+             * look for Sex dropdown
+             *   sex : //*[@id="mi_gender"]  dropdown Decline to Answer, Female, Male   element 0 after filling in sex = /html/body/div[1]/div/div[5]/div/div[2]/div/div/div[3]/form/div[1]/div[4]/div[1]/div[2]/div[1]/div[3]/ul/li
+             *                                                                                                           li[class="typeahead__item typeahead__group-group"][data-index="0"]
+             *   hispanic : //*[@id="mi_origin"]  dropdown Hispanic or Latino, Not Hispanic or Latino, Unknown Ethnicity,  element zero same as sex above
+             *   race : //*[@id="mi_represents"]  dropdown White       element zero same as sex and hispanic
+             *   health questions - example first one No : //*[@id="noptHasHealthProblem"]
+             *
+             *   other health conditions text box : //*[@id="ptHasOtherMedicalCondition"]
+             *   next button : //*[@id="continue"]
+             *
+             *
+             * if successful, will go to the consent page
+             * look for signature box
+             *   signature : //*[@id="signature"]
+             *
+             *
+             *<div class="covid-scheduler__section">
+                <div class="form__group">
+                    <div class="form__row question"><p>Do you have a long-term health problem with heart disease, kidney disease, metabolic disorder (e.g. diabetes), anemia, or blood disorders?</p></div>
+                    <div class="form__row btn-group">
+                        <button id="ysptHasHealthProblem" type="button" class="button">Yes</button>
+                        <button id="noptHasHealthProblem" type="button" class="button">No</button>
+                        <button id="naptHasHealthProblem" type="button" class="button">Don't Know</button>
+                        <input name="ptHasHealthProblem" id="ptHasHealthProblem" class="form__input questionscreen4" hidden="">
+                    </div>
+                </div>
+                <div class="form__group">
+                    <div class="form__row question"><p>Do you have a long-term health problem with lung disease or asthma?</p></div>
+                    <div class="form__row btn-group">
+                        <button id="ysptHasLungProblem" type="button" class="button">Yes</button>
+                        <button id="noptHasLungProblem" type="button" class="button">No</button>
+                        <button id="naptHasLungProblem" type="button" class="button">Don't Know</button>
+                        <input name="ptHasLungProblem" id="ptHasLungProblem" class="form__input questionscreen4" hidden="">
+                    </div>
+                </div>
+                <div class="form__group">
+                    <div class="form__row question"><p>Do you use any nicotine products?</p></div>
+                    <div class="form__row btn-group">
+                        <button id="ysptUsesNicotine" type="button" class="button" name="ptUsesNicotine">Yes</button>
+                        <button id="noptUsesNicotine" type="button" class="button">No</button>
+                        <button id="naptUsesNicotine" type="button" class="button">Don't Know</button>
+                        <input name="ptUsesNicotine" id="ptUsesNicotine" class="form__input questionscreen4" hidden="">
+                    </div>
+                </div>
+                <div class="form__group">
+                    <div class="form__row question"><p>Do you have allergies to medications, food (i.e. eggs), latex or any vaccine component (e.g. neomycin, formaldehyde, gentamicin, thimerosal, bovine protein, phenol, polymyxin, gelatin, baker's yeast or yeast)?</p></div>
+                    <div class="form__row btn-group">
+                        <button id="ysptHasVaxAllergy" type="button" class="button">Yes</button>
+                        <button id="noptHasVaxAllergy" type="button" class="button">No</button>
+                        <button id="naptHasVaxAllergy" type="button" class="button">Don't Know</button>
+                        <input name="ptHasVaxAllergy" id="ptHasVaxAllergy" class="form__input questionscreen4" hidden="">
+                    </div>
+                </div>
+                <div class="form__group">
+                    <div class="form__row question"><p>Have you received any vaccinations in the past 4 weeks?</p></div>
+                    <div class="form__row btn-group">
+                        <button id="ysptGotVaxInLast4Weeks" type="button" class="button">Yes</button>
+                        <button id="noptGotVaxInLast4Weeks" type="button" class="button">No</button>
+                        <button id="naptGotVaxInLast4Weeks" type="button" class="button">Don't Know</button>
+                        <input name="ptGotVaxInLast4Weeks" id="ptGotVaxInLast4Weeks" class="form__input questionscreen4" hidden="">
+                    </div>
+                </div>
+                <div class="form__group">
+                    <div class="form__row question"><p>Have you ever had a serious reaction after receiving a vaccination?</p></div>
+                    <div class="form__row btn-group">
+                        <button id="ysptHasPriorVaxReaction" type="button" class="button">Yes</button>
+                        <button id="noptHasPriorVaxReaction" type="button" class="button">No</button>
+                        <button id="naptHasPriorVaxReaction" type="button" class="button">Don't Know</button>
+                        <input name="ptHasPriorVaxReaction" id="ptHasPriorVaxReaction" class="form__input questionscreen4" hidden="">
+                    </div>
+                </div>
+                <div class="form__group">
+                    <div class="form__row question"><p>Do you have a neurological disorder such as seizures or other disorders that affect the brain or have had a disorder that resulted from vaccine (e.g. Guillain-Barre Syndrome)?</p></div>
+                    <div class="form__row btn-group">
+                        <button id="ysptHasSeizureHistory" type="button" class="button">Yes</button>
+                        <button id="noptHasSeizureHistory" type="button" class="button">No</button>
+                        <button id="naptHasSeizureHistory" type="button" class="button">Don't Know</button>
+                        <input name="ptHasSeizureHistory" id="ptHasSeizureHistory" class="form__input questionscreen4" hidden="">
+                    </div>
+                </div>
+                <div class="form__group">
+                    <div class="form__row question"><p>Do you have cancer, leukemia, AIDS, or any other immune system problem? (in some circumstances you may be referred to your physician)</p></div>
+                    <div class="form__row btn-group">
+                        <button id="ysptHasImmuneProblem" type="button" class="button">Yes</button>
+                        <button id="noptHasImmuneProblem" type="button" class="button">No</button>
+                        <button id="naptHasImmuneProblem" type="button" class="button">Don't Know</button>
+                        <input name="ptHasImmuneProblem" id="ptHasImmuneProblem" class="form__input questionscreen4" hidden="">
+                    </div>
+                </div>
+                <div class="form__group">
+                    <div class="form__row question"><p>Do you take prednisone, other steroids, or anticancer drugs, or have you had radiation treatments?</p></div>
+                    <div class="form__row btn-group">
+                        <button id="ysptTakesCancerDrugs" type="button" class="button">Yes</button>
+                        <button id="noptTakesCancerDrugs" type="button" class="button">No</button>
+                        <button id="naptTakesCancerDrugs" type="button" class="button">Don't Know</button>
+                        <input name="ptTakesCancerDrugs" id="ptTakesCancerDrugs" class="form__input questionscreen4" hidden="">
+                    </div>
+                </div>
+                <div class="form__group">
+                    <div class="form__row question"><p>During the past year, have you received a transfusion of blood or blood products, including anti bodies?</p></div>
+                    <div class="form__row btn-group">
+                        <button id="ysptReceivedTransfusion" type="button" class="button">Yes</button>
+                        <button id="noptReceivedTransfusion" type="button" class="button">No</button>
+                        <button id="naptReceivedTransfusion" type="button" class="button">Don't Know</button>
+                        <input name="ptReceivedTransfusion" id="ptReceivedTransfusion" class="form__input questionscreen4" hidden="">
+                    </div>
+                </div>
+                <div class="form__group">
+                    <div class="form__row question"><p>Are you parent, family member, or caregiver to a new born infant?</p></div>
+                    <div class="form__row btn-group">
+                        <button id="ysptIsInfantCaregiver" type="button" class="button">Yes</button>
+                        <button id="noptIsInfantCaregiver" type="button" class="button">No</button>
+                        <button id="naptIsInfantCaregiver" type="button" class="button">Don't Know</button>
+                        <input name="ptIsInfantCaregiver" id="ptIsInfantCaregiver" class="form__input questionscreen4" hidden="">
+                    </div>
+                </div>
+                <div class="form__group">
+                    <div class="form__row question"><p>Are you pregnant or could you become pregnant in the next three months?</p></div>
+                    <div class="form__row btn-group">
+                        <button id="ysptIsPregnant" type="button" class="button">Yes</button>
+                        <button id="noptIsPregnant" type="button" class="button">No</button>
+                        <button id="naptIsPregnant" type="button" class="button">Don't Know</button>
+                        <input name="ptIsPregnant" id="ptIsPregnant" class="form__input questionscreen4" hidden="">
+                    </div>
+                </div>
+                <div class="form__group">
+                    <div class="form__row question"><p>Will you bring your Immunization Record Card with you?</p></div>
+                    <div class="form__row btn-group">
+                        <button id="ysptHasImmRecCard" type="button" class="button">Yes</button>
+                        <button id="noptHasImmRecCard" type="button" class="button">No</button>
+                        <button id="naptHasImmRecCard" type="button" class="button">Don't Know</button>
+                        <input name="ptHasImmRecCard" id="ptHasImmRecCard" class="form__input questionscreen4" hidden="">
+                    </div>
+                </div>
+                <div class="form__group">
+                    <div class="form__row question"><p>Are you currently enrolled in one of our medication adherence programs at Rite Aid (OneTrip Refill, Automated Courtesy Refills, or Rx Messaging - Text, Email, Phone)?</p></div>
+                    <div class="form__row btn-group">
+                        <button id="ysptHasMedAdherenceProgram" type="button" class="button">Yes</button>
+                        <button id="noptHasMedAdherenceProgram" type="button" class="button">No</button>
+                        <button id="naptHasMedAdherenceProgram" type="button" class="button">Don't Know</button>
+                        <input name="ptHasMedAdherenceProgram" id="ptHasMedAdherenceProgram" class="form__input questionscreen4" hidden="">
+                    </div>
+                </div>
+                <div class="form__group">
+                    <div class="form__row question"><p>Have you had a pneumococcal vaccine? (You may need two different pneumococcal shots)</p></div>
+                    <div class="form__row btn-group">
+                        <button id="ysptHadFluShot" type="button" class="button">Yes</button>
+                        <button id="noptHadFluShot" type="button" class="button">No</button>
+                        <button id="naptHadFluShot" type="button" class="button">Don't Know</button>
+                        <input name="ptHadFluShot" id="ptHadFluShot" class="form__input questionscreen4" hidden="">
+                    </div>
+                </div>
+                <div class="form__group">
+                    <div class="form__row question"><p>Have you had a shingles vaccine?</p></div>
+                    <div class="form__row btn-group">
+                        <button id="ysptHadShinglesShot" type="button" class="button">Yes</button>
+                        <button id="noptHadShinglesShot" type="button" class="button">No</button>
+                        <button id="naptHadShinglesShot" type="button" class="button">Don't Know</button>
+                        <input name="ptHadShinglesShot" id="ptHadShinglesShot" class="form__input questionscreen4" hidden="">
+                    </div>
+                </div>
+                <div class="form__group">
+                    <div class="form__row question"><p>Have you had a whooping cough(Tdap/Td) vaccine?</p></div>
+                    <div class="form__row btn-group">
+                        <button id="ysptHadWhoopShot" type="button" class="button">Yes</button>
+                        <button id="noptHadWhoopShot" type="button" class="button">No</button>
+                        <button id="naptHadWhoopShot" type="button" class="button">Don't Know</button>
+                        <input name="ptHadWhoopShot" id="ptHadWhoopShot" class="form__input questionscreen4" hidden="">
+                    </div>
+                </div>
+				<div class="form__group">
+                	<div class="form__row question">
+                    	<label for="ptHasOtherMedicalCondition">Do you have any other medical conditions? (optional)</label>
+                        <textarea id="ptHasOtherMedicalCondition" name="ptHasOtherMedicalCondition" class="form__input" aria-label="Enter other medical conditions"></textarea><br>
+                	</div>
+            	</div>
+             </div>
+             *
+             *
+             */
+
+            try
+            {
+                return true;
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
         }
     }
 }

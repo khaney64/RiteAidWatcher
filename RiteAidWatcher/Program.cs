@@ -386,6 +386,7 @@ namespace RiteAidWatcher
             }
             catch (Exception e)
             {
+                Console.Beep(200, 500); // debug
                 Console.Error.WriteLine(e.Message);
                 Console.Error.WriteLine(e.StackTrace);
                 browserCache.Push(browser);
