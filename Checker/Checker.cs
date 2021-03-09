@@ -9,6 +9,7 @@ using System.Data;
 using System.Threading;
 using Newtonsoft.Json.Serialization;
 using ExpectedConditions = SeleniumExtras.WaitHelpers.ExpectedConditions;
+using System.Linq;
 
 namespace RiteAidChecker
 {
@@ -98,7 +99,7 @@ namespace RiteAidChecker
             zipBox.Clear();
         }
 
-        public static bool Check(string zip, string store, ChromeDriver driver)
+        public static (bool haveSlots, string info) Check(string zip, string store, ChromeDriver driver)
         {
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
 
@@ -113,12 +114,8 @@ namespace RiteAidChecker
 
             // Store check
             var buttonBy = By.CssSelector($"a[class*=\"covid-store__store__anchor--unselected\"][data-loc-id=\"{store}\"]");
-            if (driver.IsElementPresent(buttonBy))
-            {
-                var foo = 1;
-            }
-            var storeButton = wait.Until(ExpectedConditions.ElementToBeClickable(buttonBy));
-            driver.ScrollElementIntoView(buttonBy, clickable: true);
+            //var storeButton = wait.Until(ExpectedConditions.ElementToBeClickable(buttonBy));
+            var storeButton = driver.ScrollElementIntoView(buttonBy, clickable: true);
             Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
             //storeButton.Click();
             storeButton.SendKeys(Keys.Enter);
@@ -128,7 +125,7 @@ namespace RiteAidChecker
             var nextByXpath = By.XPath("//*[@id=\"continue\"]");
 
             wait.Until(ExpectedConditions.ElementExists(nextByXpath));
-            var nextButton = wait.Until(ExpectedConditions.ElementToBeClickable(nextByXpath));
+            var nextButton = driver.ScrollElementIntoView(nextByXpath, clickable: true);
             nextButton.Click();
 
             Thread.Sleep(2000);
@@ -136,36 +133,33 @@ namespace RiteAidChecker
             // if it fails slots test it'll display a warning now
             if (driver.IsElementPresent(By.CssSelector("div[class=\"covid-store__slot-template\"][data-template-id=\"covid-store__slot-template-id\"][style=\"\"]")))
             {
-                return false;
+                return (false, "no slots");
             }
 
             var covidTimeByCss = By.CssSelector("input[type=\"radio\"][class=\"covid-time__radio\"]");
-            if (driver.IsElementPresent(covidTimeByCss))
+            var covidTimes = driver.FindElementsByCssSelector("input[type=\"radio\"][class=\"covid-time__radio\"]");
+            foreach (var covidTime in covidTimes)
             {
-                var radio = wait.Until(ExpectedConditions.ElementToBeClickable(covidTimeByCss));
-                radio.Click();
+                driver.ScrollElementIntoView(covidTimeByCss, clickable: true);
+                covidTime.Click();
+                Thread.Sleep(1000);
 
-                if (driver.IsElementPresent(nextByXpath))
-                {
-                    int foo = 1;
-                }
-
-                driver.ScrollElementIntoView(nextByXpath);
-                nextButton = wait.Until(ExpectedConditions.ElementToBeClickable(nextByXpath));
+                var nextByCss = By.CssSelector("button[id=\"continue\"][class*=\"covid-scheduler__contnuebtn form-btns--continue\"]");
+                nextButton = driver.ScrollElementIntoView(nextByCss, clickable:true);
                 nextButton.Click();
 
                 Thread.Sleep(1000);
                 // if slot it taken, it'll show a warning now instead of advancing
                 if (driver.IsElementPresent(By.CssSelector("div[class=\"covid-scheduler__validation-section covid-scheduler__invalid\"]")))
                 {
-                    return false;
+                    Thread.Sleep(1000);
+                    continue;
                 }
 
-
-                return true;
+                return (true, "");
             }
 
-            return false;
+            return (false, covidTimes.Any() ? "found slots" : "no slots");
         }
     }
 }

@@ -272,26 +272,28 @@ namespace RiteAidWatcher
                 {
                     var hasSlots = slot.Slot1 || slot.Slot2;
                     ChromeDriver browser = null;
+                    var checkInfo = "";
                     if (BrowserCheck)
                     {
-                        Console.Beep(600, 200);
+                        //Console.Beep(600, 200);
                         var checkStatus = CheckStore(store);
                         hasSlots = checkStatus.slots;
                         browser = checkStatus.browser;
+                        checkInfo = checkStatus.info;
                     }
 
                     if (hasSlots)
                     {
                         storeAlert = new AlertData() { StoreNumber = store.storeNumber, ZipCode = store.zipcode, Start = DateTime.Now, Browser = browser };
                         activeAlert.ActiveStores.Add(store.storeNumber, storeAlert);
-                        Console.Beep(600, 500);
+                        Console.Beep(600, 800);
                         Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} ({store.milesFromCenter:0.00} miles) {store.address} {store.city} {store.zipcode} has slots {slot.Slot1} {slot.Slot2}");
                         storeAlert.Slot1 = slot.Slot1;
                         storeAlert.Slot2 = slot.Slot2;
                     }
                     else
                     {
-                        Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} ({store.milesFromCenter:0.00} miles) {store.zipcode} reported slots but none found");
+                        Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} ({store.milesFromCenter:0.00} miles) {store.zipcode} reported slots but none found ({checkInfo})");
                     }
                 }
                 else
@@ -357,7 +359,7 @@ namespace RiteAidWatcher
             return await response.Content.ReadAsStringAsync();
         }
 
-        private (bool slots, ChromeDriver browser) CheckStore(Store store)
+        private (bool slots, ChromeDriver browser, string info) CheckStore(Store store)
         {
             Console.WriteLine($"{DateTime.Now:s} : Checking store {store.storeNumber} ({store.milesFromCenter:0.00} miles) {store.address} {store.city} {store.zipcode} with browser");
 
@@ -365,21 +367,21 @@ namespace RiteAidWatcher
             if (browser == null)
             {
                 Console.WriteLine($"{DateTime.Now:s} : No browsers remaining to be able to check");
-                return (true, null);
+                return (true, null, "");
             }
 
             try
             {
                 var slots = Checker.Check(store.zipcode, store.storeNumber.ToString(), browser);
-                if (!slots)
+                if (!slots.haveSlots)
                 {
                     browserCache.Push(browser);
-                    return (false, null );
+                    return (false, null, slots.info );
                 }
                 else
                 {
                     browserCache.Hold(browser);
-                    return (true, browser);
+                    return (true, browser, slots.info);
                 }
             }
             catch (Exception e)
@@ -387,7 +389,7 @@ namespace RiteAidWatcher
                 Console.Error.WriteLine(e.Message);
                 Console.Error.WriteLine(e.StackTrace);
                 browserCache.Push(browser);
-                return (false, null);
+                return (false, null, "exception");
             }
         }
     }
