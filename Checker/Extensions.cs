@@ -13,6 +13,7 @@ namespace RiteAidChecker
         {
             switch (condition)
             {
+                case ConditionType.Cancer:
                 case ConditionType.Diabetes:
                 case ConditionType.Obesity:
                     return condition.ToString();

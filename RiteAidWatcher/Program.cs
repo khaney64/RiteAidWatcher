@@ -63,15 +63,55 @@ namespace RiteAidWatcher
 
             provider = services.BuildServiceProvider();
 
-            var data = new RiteAidData()
+            // todo load from file
+            RiteAidData data = null;
+            data = new RiteAidData()
             {
-                BirthDate = "01/01/2000",
+                FirstName = "***REMOVED***",
+                LastName = "***REMOVED***",
+                StreetAddress = "***REMOVED***",
+                BirthDate = "***REMOVED***",
                 City = "***REMOVED***",
                 State = "Pennsylvania",
                 Zip = "***REMOVED***",
+                MobilePhone = "***REMOVED***",
+                EmailAddress = "***REMOVED***",
                 Condition = ConditionType.WeakendImmuneSystem,
-                Occupation = OccupationType.NoneOfTheAbove
+                Occupation = OccupationType.NoneOfTheAbove,
+                OtherConditions = "lupus"
             };
+
+            //data = new RiteAidData()
+            //{
+            //    FirstName = "***REMOVED***",
+            //    LastName = "***REMOVED***",
+            //    StreetAddress = "***REMOVED***",
+            //    BirthDate = "***REMOVED***",
+            //    City = "***REMOVED***",
+            //    State = "New York",
+            //    Zip = "***REMOVED***",
+            //    MobilePhone = "***REMOVED***",
+            //    EmailAddress = "***REMOVED***",
+            //    Condition = ConditionType.WeakendImmuneSystem,
+            //    Occupation = OccupationType.NoneOfTheAbove,
+            //    OtherConditions = "diabetes"
+            //};
+
+            //data = new RiteAidData()
+            //{
+            //    FirstName = "***REMOVED***",
+            //    LastName = "***REMOVED***",
+            //    StreetAddress = "***REMOVED***",
+            //    BirthDate = "03/13/1964",
+            //    City = "***REMOVED***",
+            //    State = "Pennsylvania",
+            //    Zip = "***REMOVED***",
+            //    MobilePhone = "***REMOVED***",
+            //    EmailAddress = "***REMOVED***",
+            //    Condition = ConditionType.Cancer,
+            //    Occupation = OccupationType.NoneOfTheAbove,
+            //    OtherConditions = "cancer"
+            //};
 
             await new RiteAidWatcher(filter, maxMiles, data, browserCheck).Watch(zip);
         }

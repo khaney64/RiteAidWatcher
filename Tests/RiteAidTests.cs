@@ -22,7 +22,7 @@ namespace RiteAidTests
 
             var cache = new BrowserCache(1, data, Checker.Initializer, Checker.Resetter);
             var browser = cache.Pop();
-            var available = Checker.Check("19406", "11158", browser);
+            var available = Checker.Check("19406", "11158", data, browser);
         }
 
     }

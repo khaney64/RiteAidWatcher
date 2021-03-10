@@ -6,6 +6,7 @@ namespace RiteAidChecker
 {
     public enum ConditionType
     {
+        Cancer,
         Diabetes,
         Obesity,
         WeakendImmuneSystem

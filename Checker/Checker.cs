@@ -169,7 +169,7 @@ namespace RiteAidChecker
             return (false, covidTimes.Any() ? $"found slots ({covidTimes.Count})" : $"no slots - scheduler");
         }
 
-        private static bool PatientInfo(ChromeDriver driver, RiteAidData data)
+        private static bool PatientInfo(ChromeDriver browser, RiteAidData data)
         {
             /*
              * look for guardian checkbox - //*[@id="ptHasGuardian"]
@@ -372,12 +372,84 @@ namespace RiteAidChecker
 
             try
             {
+                var wait = new WebDriverWait(browser, TimeSpan.FromSeconds(20));
+
+                // make sure we're on the right page.. look for guardian slider
+                var tries = 0;
+                const int maxTries = 3;
+                while (tries < maxTries && !browser.IsElementPresent(By.XPath("//*[@id=\"ptHasGuardian\"]")))
+                {
+                    tries++;
+                    if (tries == maxTries)
+                    {
+                        return false;
+                    }
+                    Thread.Sleep(500);
+                }
+
+                // first name
+                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"firstName\"]"), data.FirstName);
+                // last name
+                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"lastName\"]"), data.LastName);
+                // Birth Date
+                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"lastName\"]"), data.BirthDate);
+                // Mobile Phone
+                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"phone\"]"), data.MobilePhone);
+                // Street Address
+                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"addr1\"]"), data.StreetAddress);
+                // Email
+                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"email\"]"), data.EmailAddress);
+                // City
+                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"city\"]"), data.City);
+
+                // State
+                var stateBox = browser.ScrollElementIntoView("//*[@id=\"patient_state\"]", clickable: true);
+                Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
+                stateBox.Click();
+                // wait for this div to change
+                wait.Until(ExpectedConditions.ElementExists(By.CssSelector("div[class=\"form__row typeahead__container result\"]")));
+                browser.FindElement(By.XPath("//*[@id=\"patient_state\"]")).SendKeys(data.State + "\t");
+
+                // Zip
+                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"zip\"]"), data.Zip);
+
+                // sms checkbox
+                var checkbox = browser.ScrollElementIntoView("//*[@id=\"sendReminderSMS\"]", clickable: true);
+                //Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
+                checkbox.Click();
+
+                // email checkbox
+                checkbox = browser.ScrollElementIntoView("//*[@id=\"sendReminderEmail\"]", clickable: true);
+                //Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
+                checkbox.Click();
+
+                // sms checkbox
+                var slider = browser.ScrollElementIntoView("//*[@id=\"physician\"]", clickable: true);
+                //Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
+                slider.Click();
+
+                Thread.Sleep(1000);
+
+                // Next
+                var nextButton = browser.ScrollElementIntoView("//*[@id=\"continue\"]", clickable: true);
+                nextButton.Click();
+
                 return true;
             }
             catch (Exception e)
             {
+                Console.Beep(200, 500); // debug
+                Console.Error.WriteLine($"Unexpected Patient Info exception : {e.Message}");
+                Console.Error.WriteLine(e.StackTrace);
                 return false;
             }
+        }
+
+        private static void FindFieldAndSendText(ChromeDriver browser, WebDriverWait wait, By by, string value)
+        {
+            wait.Until(ExpectedConditions.ElementExists(by));
+            var field = browser.ScrollElementIntoView(by);
+            field.SendKeys(value);
         }
     }
 }
