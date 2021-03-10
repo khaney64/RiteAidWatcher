@@ -34,6 +34,7 @@ namespace RiteAidWatcher
         private readonly int MaxMiles = 0;
         private readonly bool BrowserCheck;
         private readonly BrowserCache browserCache;
+        private readonly RiteAidData riteAidData;
 
         async static Task Main(string[] args)
         {
@@ -62,10 +63,20 @@ namespace RiteAidWatcher
 
             provider = services.BuildServiceProvider();
 
-            await new RiteAidWatcher(filter, maxMiles, browserCheck).Watch(zip);
+            var data = new RiteAidData()
+            {
+                BirthDate = "01/01/2000",
+                City = "***REMOVED***",
+                State = "Pennsylvania",
+                Zip = "***REMOVED***",
+                Condition = ConditionType.WeakendImmuneSystem,
+                Occupation = OccupationType.NoneOfTheAbove
+            };
+
+            await new RiteAidWatcher(filter, maxMiles, data, browserCheck).Watch(zip);
         }
 
-        private RiteAidWatcher(bool filter, int maxMiles, bool browserCheck)
+        private RiteAidWatcher(bool filter, int maxMiles, RiteAidData data, bool browserCheck)
         {
             Alerts = new List<Alert>();
             var configuration = provider.GetService<NotifierConfiguration>();
@@ -73,21 +84,11 @@ namespace RiteAidWatcher
             Filter = filter;
             MaxMiles = maxMiles;
             BrowserCheck = browserCheck;
+            riteAidData = data;
             if (browserCheck)
             {
-                var data = new RiteAidData()
-                {
-                    BirthDate = "01/01/2000",
-                    City = "***REMOVED***",
-                    State = "Pennsylvania",
-                    Zip = "***REMOVED***",
-                    Condition = ConditionType.WeakendImmuneSystem,
-                    Occupation = OccupationType.NoneOfTheAbove
-                };
-
                 browserCache = new BrowserCache(MaxBrowsers, data, Checker.Initializer, Checker.Resetter);
                 browserCache.Preload();
-
             }
         }
 
@@ -372,7 +373,7 @@ namespace RiteAidWatcher
 
             try
             {
-                var slots = Checker.Check(store.zipcode, store.storeNumber.ToString(), browser);
+                var slots = Checker.Check(store.zipcode, store.storeNumber.ToString(), riteAidData, browser);
                 if (!slots.haveSlots)
                 {
                     browserCache.Push(browser);
