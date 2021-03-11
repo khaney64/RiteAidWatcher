@@ -125,11 +125,17 @@ namespace RiteAidWatcher
             MaxMiles = maxMiles;
             BrowserCheck = browserCheck;
             riteAidData = data;
+            DumpStateRules(data);
             if (browserCheck)
             {
                 browserCache = new BrowserCache(MaxBrowsers, data, Checker.Initializer, Checker.Resetter);
                 browserCache.Preload();
             }
+        }
+
+        private void DumpStateRules(RiteAidData data)
+        {
+            var jsonResponse = FetchRulesForState(data.State).GetAwaiter().GetResult();
         }
 
         private async Task Watch(string zip)
@@ -388,6 +394,12 @@ namespace RiteAidWatcher
         private async Task<string> FetchSlotsForStore(Store store)
         {
             var uri = String.Format(FetchSlotsTemplate, store.storeNumber);
+            return await FetchJsonResponse(uri);
+        }
+
+        private async Task<string> FetchRulesForState(string state)
+        {
+            var uri = "rule-engine.json";
             return await FetchJsonResponse(uri);
         }
 
