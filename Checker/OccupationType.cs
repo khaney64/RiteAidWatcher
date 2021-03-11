@@ -6,6 +6,7 @@ namespace RiteAidChecker
 {
     public enum OccupationType
     {
+        ChildcareWorker,
         NoneOfTheAbove
     }
 }

@@ -28,6 +28,8 @@ namespace RiteAidChecker
         {
             switch (occupation)
             {
+                case OccupationType.ChildcareWorker:
+                    return "Childcare Worker";
                 case OccupationType.NoneOfTheAbove:
                     return "None of the Above";
                 default:

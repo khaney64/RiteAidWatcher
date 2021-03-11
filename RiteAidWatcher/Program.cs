@@ -5,6 +5,7 @@ using OpenQA.Selenium.Chrome;
 using RiteAidChecker;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -38,10 +39,9 @@ namespace RiteAidWatcher
 
         async static Task Main(string[] args)
         {
-            var zip = args[0];
-            bool filter = args.Length > 1 ? bool.Parse(args[1]) : true;
-            int maxMiles = args.Length > 2 ? int.Parse(args[2]) : 999;
-            bool browserCheck = args.Length > 3 ? bool.Parse(args[3]) : false;
+            var datafile = args[0];
+
+            var config = JsonConvert.DeserializeObject<RiteAidConfig>(await File.ReadAllTextAsync(args[0]));
 
             IConfigurationBuilder builder = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json")
@@ -63,79 +63,47 @@ namespace RiteAidWatcher
 
             provider = services.BuildServiceProvider();
 
-            // todo load from file
-            RiteAidData data = null;
-            data = new RiteAidData()
-            {
-                FirstName = "***REMOVED***",
-                LastName = "***REMOVED***",
-                StreetAddress = "***REMOVED***",
-                BirthDate = "***REMOVED***",
-                City = "***REMOVED***",
-                State = "Pennsylvania",
-                Zip = "***REMOVED***",
-                MobilePhone = "***REMOVED***",
-                EmailAddress = "***REMOVED***",
-                Condition = ConditionType.WeakendImmuneSystem,
-                Occupation = OccupationType.NoneOfTheAbove,
-                OtherConditions = "lupus"
-            };
-
-            //data = new RiteAidData()
-            //{
-            //    FirstName = "***REMOVED***",
-            //    LastName = "***REMOVED***",
-            //    StreetAddress = "***REMOVED***",
-            //    BirthDate = "***REMOVED***",
-            //    City = "***REMOVED***",
-            //    State = "New York",
-            //    Zip = "***REMOVED***",
-            //    MobilePhone = "***REMOVED***",
-            //    EmailAddress = "***REMOVED***",
-            //    Condition = ConditionType.WeakendImmuneSystem,
-            //    Occupation = OccupationType.NoneOfTheAbove,
-            //    OtherConditions = "diabetes"
-            //};
-
-            //data = new RiteAidData()
-            //{
-            //    FirstName = "***REMOVED***",
-            //    LastName = "***REMOVED***",
-            //    StreetAddress = "***REMOVED***",
-            //    BirthDate = "03/13/1964",
-            //    City = "***REMOVED***",
-            //    State = "Pennsylvania",
-            //    Zip = "***REMOVED***",
-            //    MobilePhone = "***REMOVED***",
-            //    EmailAddress = "***REMOVED***",
-            //    Condition = ConditionType.Cancer,
-            //    Occupation = OccupationType.NoneOfTheAbove,
-            //    OtherConditions = "cancer"
-            //};
-
-            await new RiteAidWatcher(filter, maxMiles, data, browserCheck).Watch(zip);
+            await new RiteAidWatcher(config).Watch(config.Data.Zip);
         }
 
-        private RiteAidWatcher(bool filter, int maxMiles, RiteAidData data, bool browserCheck)
+        private RiteAidWatcher(RiteAidConfig riteAidConfig)
         {
             Alerts = new List<Alert>();
             var configuration = provider.GetService<NotifierConfiguration>();
             Notifier = new Notifier(configuration);
-            Filter = filter;
-            MaxMiles = maxMiles;
-            BrowserCheck = browserCheck;
-            riteAidData = data;
-            DumpStateRules(data);
-            if (browserCheck)
+            Filter = riteAidConfig.Filter;
+            MaxMiles = riteAidConfig.MaxMiles;
+            BrowserCheck = riteAidConfig.BrowserCheck;
+            riteAidData = riteAidConfig.Data;
+            DumpStateRules(riteAidData);
+            if (BrowserCheck)
             {
-                browserCache = new BrowserCache(MaxBrowsers, data, Checker.Initializer, Checker.Resetter);
+                browserCache = new BrowserCache(MaxBrowsers, riteAidData, Checker.Initializer, Checker.Resetter);
                 browserCache.Preload();
             }
         }
 
         private void DumpStateRules(RiteAidData data)
         {
-            var jsonResponse = FetchRulesForState(data.State).GetAwaiter().GetResult();
+            var jsonResponse = FetchRules().GetAwaiter().GetResult();
+            var rules = JsonConvert.DeserializeObject<RulesRoot>(jsonResponse);
+            var found = false;
+            foreach (var conditions in rules.Conditions.Any)
+            {
+                if (conditions.All.Exists(c => c.Fact == "stateCode" && (string)c.Value == data.StateCode))
+                {
+                    found = true;
+                    foreach (var condition in conditions.All)
+                    {
+                        Console.WriteLine($"{condition.Fact} {condition.Operator} {condition.Value}");
+                    }
+                }
+            }
+
+            if (!found)
+            {
+                Console.WriteLine($"No rules found for state {data.StateCode} - may not be able to find slots");
+            }
         }
 
         private async Task Watch(string zip)
@@ -397,9 +365,9 @@ namespace RiteAidWatcher
             return await FetchJsonResponse(uri);
         }
 
-        private async Task<string> FetchRulesForState(string state)
+        private async Task<string> FetchRules()
         {
-            var uri = "rule-engine.json";
+            var uri = "/content/dam/riteaid-web/covid-19/rule-engine.json";
             return await FetchJsonResponse(uri);
         }
 

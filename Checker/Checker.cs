@@ -64,7 +64,7 @@ namespace RiteAidChecker
             stateBox.Click();
             // wait for this div to change
             wait.Until(ExpectedConditions.ElementExists(By.CssSelector("div[class=\"form__row typeahead__container result\"]")));
-            browser.FindElement(By.XPath("//*[@id=\"eligibility_state\"]")).SendKeys(data.State + "\t");
+            browser.FindElement(By.XPath("//*[@id=\"eligibility_state\"]")).SendKeys(data.StateName + "\t");
 
             // Zip
             browser.FindElement(By.XPath("//*[@id=\"zip\"]")).SendKeys(data.Zip + "\t");
@@ -125,6 +125,7 @@ namespace RiteAidChecker
             var nextByXpath = By.XPath("//*[@id=\"continue\"]");
 
             wait.Until(ExpectedConditions.ElementExists(nextByXpath));
+            Thread.Sleep(1000);
             var nextButton = driver.ScrollElementIntoView(nextByXpath, clickable: true);
             nextButton.Click();
 
@@ -392,7 +393,7 @@ namespace RiteAidChecker
                 // last name
                 FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"lastName\"]"), data.LastName);
                 // Birth Date
-                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"lastName\"]"), data.BirthDate);
+                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"dateOfBirth\"]"), data.BirthDate);
                 // Mobile Phone
                 FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"phone\"]"), data.MobilePhone);
                 // Street Address
@@ -408,18 +409,28 @@ namespace RiteAidChecker
                 stateBox.Click();
                 // wait for this div to change
                 wait.Until(ExpectedConditions.ElementExists(By.CssSelector("div[class=\"form__row typeahead__container result\"]")));
-                browser.FindElement(By.XPath("//*[@id=\"patient_state\"]")).SendKeys(data.State + "\t");
+                browser.FindElement(By.XPath("//*[@id=\"patient_state\"]")).SendKeys(data.StateName + "\t");
 
                 // Zip
                 FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"zip\"]"), data.Zip);
 
-                // sms checkbox
-                var checkbox = browser.ScrollElementIntoView("//*[@id=\"sendReminderSMS\"]", clickable: true);
+                if (browser.IsElementPresent(By.XPath("//*[@id=\"sendReminderSMS\"]")))
+                {
+                    int foo = 1;
+                }
+
+                if (browser.IsElementPresent(By.XPath("//*[@id=\"sendReminderEmail\"]")))
+                {
+                    int foo = 1;
+                }
+
+                // sms checkbox 
+                var checkbox = browser.ScrollElementIntoView("//*[@id=\"sendReminderSMS\"]"); //, clickable: true);
                 //Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
                 checkbox.Click();
 
                 // email checkbox
-                checkbox = browser.ScrollElementIntoView("//*[@id=\"sendReminderEmail\"]", clickable: true);
+                checkbox = browser.ScrollElementIntoView("//*[@id=\"sendReminderEmail\"]"); //, clickable: true);
                 //Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
                 checkbox.Click();
 
