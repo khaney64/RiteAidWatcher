@@ -10,12 +10,12 @@ namespace RiteAidChecker
         private readonly Stack<ChromeDriver> availableStack;
         private readonly List<ChromeDriver> holdList;
         private readonly int maxBrowsers;
-        private readonly RiteAidData data;
-        private readonly Action<ChromeDriver,RiteAidData> initializer;
+        private readonly object data;
+        private readonly Action<ChromeDriver,object> initializer;
         private readonly Action<ChromeDriver> resetter;
         private int loadedBrowsers;
 
-        public BrowserCache(int browsers, RiteAidData data, Action<ChromeDriver,RiteAidData> initializer, Action<ChromeDriver> resetter)
+        public BrowserCache(int browsers, object data, Action<ChromeDriver,object> initializer, Action<ChromeDriver> resetter)
         {
             availableStack = new Stack<ChromeDriver>(browsers);
             holdList = new List<ChromeDriver>();

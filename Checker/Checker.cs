@@ -15,8 +15,10 @@ namespace RiteAidChecker
 {
     public class Checker
     {
-        public static void Initializer(ChromeDriver browser, RiteAidData data)
+        public static void Initializer(ChromeDriver browser, object data)
         {
+            var riteAidData = data as RiteAidData;
+
             var homeURL = "https://www.riteaid.com/pharmacy/covid-qualifier";
             //browser.ExecuteJavaScript("document.body.style.zoom='50%'");
             browser.Navigate().GoToUrl(homeURL);
@@ -24,7 +26,7 @@ namespace RiteAidChecker
 
             // Birth Date
             wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@id=\"dateOfBirth\"]")));
-            browser.FindElement(By.XPath("//*/input[@id=\"dateOfBirth\"]")).SendKeys(data.BirthDate);
+            browser.FindElement(By.XPath("//*/input[@id=\"dateOfBirth\"]")).SendKeys(riteAidData.BirthDate);
 
             // Zip
             browser.FindElement(By.XPath("//*[@id=\"zip\"]")).Click();
@@ -35,7 +37,7 @@ namespace RiteAidChecker
             occupationDropdown.Click();
 
             wait.Until(ExpectedConditions.ElementExists(By.CssSelector("div[class=\"form__row typeahead__container result\"]")));
-            occupationDropdown.SendKeys(data.Occupation.Format());
+            occupationDropdown.SendKeys(riteAidData.Occupation.Format());
 
             var occupationItem = By.XPath("//*[@id=\"eligibility\"]/div/div[2]/div[1]/div/div/ul/li/a");
 
@@ -43,7 +45,7 @@ namespace RiteAidChecker
             item.Click();
 
             // City
-            browser.FindElement(By.XPath("//*[@id=\"city\"]")).SendKeys(data.City);
+            browser.FindElement(By.XPath("//*[@id=\"city\"]")).SendKeys(riteAidData.City);
 
             // Medical Condition
             browser.ScrollElementIntoView("//*[@id=\"mediconditions\"]", clickable: true);
@@ -51,7 +53,7 @@ namespace RiteAidChecker
             Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
             conditionDropdown.Click();
             wait.Until(ExpectedConditions.ElementExists(By.CssSelector("div[class=\"form__row typeahead__container result\"]")));
-            conditionDropdown.SendKeys(data.Condition.Format());
+            conditionDropdown.SendKeys(riteAidData.Condition.Format());
 
             var conditionItem = By.XPath("//*[@id=\"eligibility\"]/div/div[2]/div[2]/div/div/ul/li/a");
 
@@ -64,13 +66,14 @@ namespace RiteAidChecker
             stateBox.Click();
             // wait for this div to change
             wait.Until(ExpectedConditions.ElementExists(By.CssSelector("div[class=\"form__row typeahead__container result\"]")));
-            browser.FindElement(By.XPath("//*[@id=\"eligibility_state\"]")).SendKeys(data.StateName + "\t");
+            browser.FindElement(By.XPath("//*[@id=\"eligibility_state\"]")).SendKeys(riteAidData.StateName + "\t");
 
             // Zip
-            browser.FindElement(By.XPath("//*[@id=\"zip\"]")).SendKeys(data.Zip + "\t");
+            browser.FindElement(By.XPath("//*[@id=\"zip\"]")).SendKeys(riteAidData.Zip + "\t");
 
             // Next
-            var nextButton = browser.ScrollElementIntoView("//*[@id=\"continue\"]", clickable: true);
+            Thread.Sleep(1000);
+            var nextButton = browser.ScrollElementIntoView("//*[@id=\"continue\"]", clickable: true);;
             nextButton.Click();
 
             // Continue
@@ -95,7 +98,8 @@ namespace RiteAidChecker
             //browser.ExecuteJavaScript("document.body.style.zoom='50%'");
             WebDriverWait wait = new WebDriverWait(browser, TimeSpan.FromSeconds(20));
 
-            var zipBox = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//*[@id=\"covid-store-search\"]")));
+            var zipBox = browser.ScrollElementIntoView("//*[@id=\"covid-store-search\"]", clickable: true);
+            //var zipBox = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//*[@id=\"covid-store-search\"]")));
             zipBox.Clear();
         }
 

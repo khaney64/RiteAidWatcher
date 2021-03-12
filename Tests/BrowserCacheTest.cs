@@ -16,7 +16,7 @@ namespace RiteAidTests
             {
                 BirthDate = "01/01/2000",
                 City = "***REMOVED***",
-                State = "Pennsylvania",
+                StateName = "Pennsylvania",
                 Zip = "***REMOVED***",
                 Condition = ConditionType.WeakendImmuneSystem,
                 Occupation = OccupationType.NoneOfTheAbove
