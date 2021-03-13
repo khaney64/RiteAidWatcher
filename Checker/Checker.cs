@@ -15,18 +15,31 @@ namespace RiteAidChecker
 {
     public class Checker
     {
+        /// <summary>
+        /// Loads and fills in the covid qualifier page - once initialized we should be on the apt-scheduler page.
+        /// Qualification information changes (see the rules url, or rules data that is dumped on startup) so it may not get past qualification.
+        /// This page is also finicky - sometimes on startup it times out, so I usually just restart until I get the initialized browsers up successfully.
+        /// </summary>
+        /// <param name="browser"></param>
+        /// <param name="data"></param>
         public static void Initializer(ChromeDriver browser, object data)
         {
             var riteAidData = data as RiteAidData;
 
             var homeURL = "https://www.riteaid.com/pharmacy/covid-qualifier";
-            //browser.ExecuteJavaScript("document.body.style.zoom='50%'");
             browser.Navigate().GoToUrl(homeURL);
             WebDriverWait wait = new WebDriverWait(browser, TimeSpan.FromSeconds(20));
 
             // Birth Date
-            wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@id=\"dateOfBirth\"]")));
-            browser.FindElement(By.XPath("//*/input[@id=\"dateOfBirth\"]")).SendKeys(riteAidData.BirthDate);
+            // sometimes this times out... adding a wait loop
+            var dobBy = By.XPath("//*[@id=\"dateOfBirth\"]");
+            int retries = 0;
+            while (!browser.IsElementPresent(dobBy) && retries < 3)
+            {
+                retries++;
+                Thread.Sleep(1000);
+            }
+            browser.FindElement(dobBy).SendKeys(riteAidData.BirthDate);
 
             // Zip
             browser.FindElement(By.XPath("//*[@id=\"zip\"]")).Click();
@@ -79,6 +92,7 @@ namespace RiteAidChecker
             // Continue
             Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
             browser.ScrollElementIntoView("//*[@id=\"learnmorebttn\"]", clickable: true);
+            Thread.Sleep(1000);
             var continueButton = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//*[@id=\"learnmorebttn\"]")));
             continueButton.Click();
 
@@ -86,7 +100,8 @@ namespace RiteAidChecker
 
         public static void Resetter(ChromeDriver browser)
         {
-            var schedulerUrl = "https://www.riteaid.com/pharmacy/apt-scheduler";
+            //var schedulerUrl = "https://www.riteaid.com/pharmacy/apt-scheduler";
+            //should probably verify that I'm on the apt-scheduler page; that's currently the assumption
             browser.Navigate().Refresh();
             if (browser.IsAlertPresent())
             {
@@ -95,11 +110,18 @@ namespace RiteAidChecker
                 browser.SwitchTo().DefaultContent();
             }
             //browser.Navigate().GoToUrl(schedulerUrl);
-            //browser.ExecuteJavaScript("document.body.style.zoom='50%'");
             WebDriverWait wait = new WebDriverWait(browser, TimeSpan.FromSeconds(20));
 
-            var zipBox = browser.ScrollElementIntoView("//*[@id=\"covid-store-search\"]", clickable: true);
-            //var zipBox = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//*[@id=\"covid-store-search\"]")));
+            // sometimes this times out... adding a wait loop
+            var searchBy = By.XPath("//*[@id=\"covid-store-search\"]");
+            int retries = 0;
+            while (!browser.IsElementPresent(searchBy) && retries < 3)
+            {
+                retries++;
+                Thread.Sleep(1000);
+            }
+            var zipBox = wait.Until(ExpectedConditions.ElementToBeClickable(searchBy));
+            browser.ScrollElementIntoView(searchBy, clickable: true);
             zipBox.Clear();
         }
 
@@ -162,9 +184,9 @@ namespace RiteAidChecker
                     continue;
                 }
 
-                if (PatientInfo(driver, data))
-                {
-                    return (true, "patient info");
+                if (PatientInfoPage(driver, data) && MedicalInfoPage(driver, data) && ConsentPage(driver, data))
+                { 
+                    return (true, "at consent");
                 }
 
                 Console.Beep(200,500); //debug
@@ -174,7 +196,7 @@ namespace RiteAidChecker
             return (false, covidTimes.Any() ? $"found slots ({covidTimes.Count})" : $"no slots - scheduler");
         }
 
-        private static bool PatientInfo(ChromeDriver browser, RiteAidData data)
+        private static bool PatientInfoPage(ChromeDriver browser, RiteAidData data)
         {
             /*
              * look for guardian checkbox - //*[@id="ptHasGuardian"]
@@ -194,6 +216,89 @@ namespace RiteAidChecker
              *   next button : //*[@id="continue"]
              *
              * if successful, will go to medical information
+             *
+             */
+
+            try
+            {
+                var wait = new WebDriverWait(browser, TimeSpan.FromSeconds(20));
+
+                // make sure we're on the right page.. look for guardian slider
+                var tries = 0;
+                const int maxTries = 3;
+                while (tries < maxTries && !browser.IsElementPresent(By.XPath("//*[@id=\"ptHasGuardian\"]")))
+                {
+                    tries++;
+                    if (tries == maxTries)
+                    {
+                        return false;
+                    }
+                    Thread.Sleep(500);
+                }
+
+                // first name
+                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"firstName\"]"), data.FirstName);
+                // last name
+                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"lastName\"]"), data.LastName);
+                // Birth Date
+                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"dateOfBirth\"]"), data.BirthDate);
+                // Mobile Phone
+                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"phone\"]"), data.MobilePhone);
+                // Street Address
+                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"addr1\"]"), data.StreetAddress);
+                // Email
+                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"email\"]"), data.EmailAddress);
+                // City
+                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"city\"]"), data.City);
+
+                // State
+                var stateBox = browser.ScrollElementIntoView("//*[@id=\"patient_state\"]", clickable: true);
+                Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
+                stateBox.Click();
+                // wait for this div to change
+                wait.Until(ExpectedConditions.ElementExists(By.CssSelector("div[class=\"form__row typeahead__container result\"]")));
+                browser.FindElement(By.XPath("//*[@id=\"patient_state\"]")).SendKeys(data.StateName + "\t");
+
+                // Zip
+                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"zip\"]"), data.Zip + "\t");
+
+                // sms checkbox 
+                var checkbox = browser.ScrollElementIntoView(By.CssSelector("label[for=\"sendReminderSMS\"]"), clickable: true);
+                //Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
+                checkbox.Click();
+
+                // email checkbox
+                checkbox = browser.ScrollElementIntoView(By.CssSelector("label[for=\"sendReminderEmail\"]"), clickable: true);
+                //Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
+                checkbox.Click();
+
+                // physician slider
+                // there are two sliders on the page with the same label - we want the second one
+                var by = By.CssSelector("label[class=\"physcian-details__switch\"]");
+                var sliders = browser.FindElements(by);
+                var slider = sliders[1];
+                slider.Click();
+
+                Thread.Sleep(1000);
+
+                // Next
+                var nextButton = browser.ScrollElementIntoView("//*[@id=\"continue\"]", clickable: true);
+                nextButton.Click();
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                Console.Beep(200, 500); // debug
+                Console.Error.WriteLine($"Unexpected Patient Info exception : {e.Message}");
+                Console.Error.WriteLine(e.StackTrace);
+                return false;
+            }
+        }
+
+        private static bool MedicalInfoPage(ChromeDriver browser, RiteAidData data)
+        {
+            /*
              * look for Sex dropdown
              *   sex : //*[@id="mi_gender"]  dropdown Decline to Answer, Female, Male   element 0 after filling in sex = /html/body/div[1]/div/div[5]/div/div[2]/div/div/div[3]/form/div[1]/div[4]/div[1]/div[2]/div[1]/div[3]/ul/li
              *                                                                                                           li[class="typeahead__item typeahead__group-group"][data-index="0"]
@@ -209,7 +314,7 @@ namespace RiteAidChecker
              * look for signature box
              *   signature : //*[@id="signature"]
              *
-             *
+             * health questions document details 
              *<div class="covid-scheduler__section">
                 <div class="form__group">
                     <div class="form__row question"><p>Do you have a long-term health problem with heart disease, kidney disease, metabolic disorder (e.g. diabetes), anemia, or blood disorders?</p></div>
@@ -379,10 +484,13 @@ namespace RiteAidChecker
             {
                 var wait = new WebDriverWait(browser, TimeSpan.FromSeconds(20));
 
-                // make sure we're on the right page.. look for guardian slider
+
+                Console.Beep(1000, 500); Thread.Sleep(1); Console.Beep(1000, 500); // debug
+                // make sure we're on the right page.. look for gender
                 var tries = 0;
                 const int maxTries = 3;
-                while (tries < maxTries && !browser.IsElementPresent(By.XPath("//*[@id=\"ptHasGuardian\"]")))
+                var byGender = By.XPath("//*[@id=\"mi_gender\"]");
+                while (tries < maxTries && !browser.IsElementPresent(byGender))
                 {
                     tries++;
                     if (tries == maxTries)
@@ -392,69 +500,66 @@ namespace RiteAidChecker
                     Thread.Sleep(500);
                 }
 
-                // first name
-                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"firstName\"]"), data.FirstName);
-                // last name
-                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"lastName\"]"), data.LastName);
-                // Birth Date
-                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"dateOfBirth\"]"), data.BirthDate);
-                // Mobile Phone
-                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"phone\"]"), data.MobilePhone);
-                // Street Address
-                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"addr1\"]"), data.StreetAddress);
-                // Email
-                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"email\"]"), data.EmailAddress);
-                // City
-                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"city\"]"), data.City);
-
-                // State
-                var stateBox = browser.ScrollElementIntoView("//*[@id=\"patient_state\"]", clickable: true);
-                Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
-                stateBox.Click();
-                // wait for this div to change
-                wait.Until(ExpectedConditions.ElementExists(By.CssSelector("div[class=\"form__row typeahead__container result\"]")));
-                browser.FindElement(By.XPath("//*[@id=\"patient_state\"]")).SendKeys(data.StateName + "\t");
-
-                // Zip
-                FindFieldAndSendText(browser, wait, By.XPath("//*[@id=\"zip\"]"), data.Zip);
-
-                if (browser.IsElementPresent(By.XPath("//*[@id=\"sendReminderSMS\"]")))
-                {
-                    int foo = 1;
-                }
-
-                if (browser.IsElementPresent(By.XPath("//*[@id=\"sendReminderEmail\"]")))
-                {
-                    int foo = 1;
-                }
-
-                // sms checkbox 
-                var checkbox = browser.ScrollElementIntoView("//*[@id=\"sendReminderSMS\"]"); //, clickable: true);
-                //Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
-                checkbox.Click();
-
-                // email checkbox
-                checkbox = browser.ScrollElementIntoView("//*[@id=\"sendReminderEmail\"]"); //, clickable: true);
-                //Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
-                checkbox.Click();
-
-                // sms checkbox
-                var slider = browser.ScrollElementIntoView("//*[@id=\"physician\"]", clickable: true);
-                //Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
-                slider.Click();
-
                 Thread.Sleep(1000);
 
+
                 // Next
-                var nextButton = browser.ScrollElementIntoView("//*[@id=\"continue\"]", clickable: true);
-                nextButton.Click();
+                //var nextButton = browser.ScrollElementIntoView("//*[@id=\"continue\"]", clickable: true);
+                //nextButton.Click();
 
                 return true;
             }
             catch (Exception e)
             {
                 Console.Beep(200, 500); // debug
-                Console.Error.WriteLine($"Unexpected Patient Info exception : {e.Message}");
+                Console.Error.WriteLine($"Unexpected Medical Info exception : {e.Message}");
+                Console.Error.WriteLine(e.StackTrace);
+                return false;
+            }
+        }
+
+        private static bool ConsentPage(ChromeDriver browser, RiteAidData data)
+        {
+            /*
+             * look for signature box
+             *   signature : //*[@id="signature"]
+             *
+             */
+
+            try
+            {
+                var wait = new WebDriverWait(browser, TimeSpan.FromSeconds(20));
+
+                Console.Beep(1000, 500); Thread.Sleep(1); Console.Beep(1000, 500); // debug
+                // make sure we're on the right page.. look for guardian slider
+                var tries = 0;
+                const int maxTries = 3;
+                var bySignature = By.XPath("//*[@id=\"signature\"]");
+                while (tries < maxTries && !browser.IsElementPresent(bySignature))
+                {
+                    tries++;
+                    if (tries == maxTries)
+                    {
+                        return false;
+                    }
+                    Thread.Sleep(500);
+                }
+
+                // todo - figure out how to write something into the the signature box - could just be a line, but probably has to be something
+
+
+                Thread.Sleep(1000);
+
+                // Next
+                //var nextButton = browser.ScrollElementIntoView("//*[@id=\"continue\"]", clickable: true);
+                //nextButton.Click();
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                Console.Beep(200, 500); // debug
+                Console.Error.WriteLine($"Unexpected Consent: {e.Message}");
                 Console.Error.WriteLine(e.StackTrace);
                 return false;
             }
