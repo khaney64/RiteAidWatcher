@@ -71,7 +71,7 @@ The rules are defined [here](https://www.riteaid.com/content/dam/riteaid-web/cov
 **NOTE** that the chromedriver.exe must be in your current path.
 If Browsercheck is true, the other Data elements will be used on other pages if it finds a slot and can get far enough.
 
-the current BrowserCheck code gets as far as the physicians page... I haven't gotten there enough to debug / proceeed further.
-Worst case it'll stop and leave the browser where it got to, and you should be able to continue manually.  The brwoser will stay up as long as there are still slots detected, otherwise it'll reset the browser to the find stores page.
+The current BrowserCheck code gets as far as the medical information page... I haven't gotten there enough to debug / proceeed further though necessary steps are document in the code.
+Worst case it'll stop and leave the browser where it got to, and you should be able to continue manually.  If the program is still running/checking (i.e. not stopped in the debugger) the browser will stay up as long as there are still slots detected, otherwise it'll reset the browser back to the find stores page if slots are no longer available.
 
 If you run without BrowserCheck enabled, the code will just scan the (up to) 60 stores in range and look for slots, and report if any are found.  You'd likely run this side by side with an open browswer already past the [qualification page](https://www.riteaid.com/pharmacy/covid-qualifier) waiting for a zip code to search.  When the code finds a zip with a slot, it'll beep and print out the store and zip code information (it also does this with BrowserCheck enabled).  The browser check option will weed out a lot of the false hits their api often reports, avoiding you the trouble/frustration of checking only to have it tell you no slots are available.
