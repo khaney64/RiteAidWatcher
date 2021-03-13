@@ -92,5 +92,24 @@ namespace RiteAidChecker
                 return false;
             } // catch
         }
+
+        public static bool IsElementClickable(this ChromeDriver driver, By by)
+        {
+            try
+            {
+                if (!driver.IsElementPresent(by))
+                {
+                    return false;
+                }
+
+                driver.ScrollElementIntoView(by, clickable: true);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 }
