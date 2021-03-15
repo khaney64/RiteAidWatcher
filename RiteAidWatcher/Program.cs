@@ -278,67 +278,112 @@ namespace RiteAidWatcher
                     activeAlert = new Alert()
                     {
                         AlertStatus = AlertStatusType.New,
-                        ActiveStores = new Dictionary<int, AlertData>()
+                        ActiveStores = new Dictionary<int, AlertData>(),
                     };
                     Alerts.Add(activeAlert);
                 }
 
+                var hasSlots = true;
                 if (storeAlert == null)
                 {
-                    var hasSlots = slot.Slot1 || slot.Slot2;
-                    ChromeDriver browser = null;
-                    var checkInfo = "";
-                    if (BrowserCheck)
+                    storeAlert = new AlertData()
                     {
-                        //Console.Beep(600, 200);
-                        var checkStatus = CheckStore(store);
-                        hasSlots = checkStatus.slots;
-                        browser = checkStatus.browser;
-                        checkInfo = checkStatus.info;
-                    }
+                        StoreNumber = store.storeNumber,
+                        ZipCode = store.zipcode,
+                        Slot1 = slot.Slot1,
+                        Slot2 = slot.Slot2,
+                        Start = DateTime.Now,
+                        Status = StoreStatusType.New
+                    };
+                    activeAlert.ActiveStores.Add(store.storeNumber, storeAlert);
+                }
 
-                    if (hasSlots)
-                    {
-                        storeAlert = new AlertData() { StoreNumber = store.storeNumber, ZipCode = store.zipcode, Start = DateTime.Now, Browser = browser };
-                        activeAlert.ActiveStores.Add(store.storeNumber, storeAlert);
-                        Console.Beep(600, 800);
-                        Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} ({store.milesFromCenter:0.00} miles) {store.address} {store.city} {store.zipcode} has slots {slot.Slot1} {slot.Slot2}");
-                        storeAlert.Slot1 = slot.Slot1;
-                        storeAlert.Slot2 = slot.Slot2;
-                    }
-                    else
-                    {
-                        Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} ({store.milesFromCenter:0.00} miles) {store.zipcode} reported slots but none found ({checkInfo})");
-                    }
+                var checkInfo = "";
+                if (BrowserCheck && (storeAlert.Status == StoreStatusType.New || storeAlert.Status == StoreStatusType.Retry))
+                {
+                    //Console.Beep(600, 200);
+                    var checkStatus = CheckStore(store);
+                    hasSlots = checkStatus.slots;
+                    checkInfo = checkStatus.info;
+                    storeAlert.Browser = checkStatus.browser;
+                    storeAlert.LastCheck = DateTime.Now;
+                    storeAlert.Tries++;
+                }
+
+                if (hasSlots && storeAlert.Status != StoreStatusType.Wait)
+                {
+                    Console.Beep(600, 800);
+                    Console.WriteLine(
+                        $"{DateTime.Now:s} : Store {store.storeNumber} ({store.milesFromCenter:0.00} miles) {store.address} {store.city} {store.zipcode} has slots {slot.Slot1} {slot.Slot2} ({storeAlert.Status})");
+                    storeAlert.Status = StoreStatusType.Hold;
                 }
                 else
                 {
-                    var removed = false;
-                    // see if this store was active - if so, mark the end date
-                    if (storeAlert != null)
+                    // try 3 times then wait a bit before retrying
+                    if (storeAlert.Tries > 3)
                     {
-                        if (storeAlert.End == null)
-                        {
-                            removed = true;
-                            try
-                            {
-                                browserCache.Push(storeAlert.Browser);
-                            }
-                            catch (Exception)
-                            {
-                            }
-                            storeAlert.Browser = null;
-                            Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} no longer has slots");
-                        }
-                        storeAlert.End = DateTime.Now;
+                        storeAlert.Status = StoreStatusType.Wait;
+                    }
+                    else
+                    {
+                        storeAlert.Status = StoreStatusType.Retry;
+                    }
 
-                        var activeStores = activeAlert.ActiveStores.Values.ToList().FindAll(a => a.End == null);
-                        if (removed && activeStores.Count > 0)
+                    if (storeAlert.Status == StoreStatusType.Wait)
+                    {
+                        Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} ({store.milesFromCenter:0.00} miles) {store.zipcode} reported slots - waiting");
+                        if (DateTime.Now.Subtract(storeAlert.LastCheck.Value).Minutes > 3)
                         {
-                            foreach (var activeStore in activeStores)
-                            {
-                                Console.WriteLine($"{DateTime.Now:s} : Store {activeStore.StoreNumber} zip {activeStore.ZipCode} still has active slots");
-                            }
+                            storeAlert.Tries = 0;
+                            storeAlert.Status = StoreStatusType.Retry;
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine(
+                            $"{DateTime.Now:s} : Store {store.storeNumber} ({store.milesFromCenter:0.00} miles) {store.zipcode} reported slots but none found ({checkInfo}) ({storeAlert.Tries} tries)");
+                    }
+                }
+            }
+            else
+            {
+                if (storeAlert != null)
+                {
+                    // if we were holding, see if it's long enough to remove it
+                    if (storeAlert.Status == StoreStatusType.Hold && DateTime.Now.Subtract(storeAlert.LastCheck.Value).Minutes > 10)
+                    {
+                        storeAlert.Status = StoreStatusType.Wait;
+                        browserCache.Release(storeAlert.Browser);
+                    }
+
+                    var removed = false;
+                    // see if this store was active - if so, mark the end date (but not if Hold status)
+                    if (storeAlert.End == null && storeAlert.Status != StoreStatusType.Hold)
+                    {
+                        removed = true;
+                        try
+                        {
+                            browserCache.Push(storeAlert.Browser);
+                        }
+                        catch (Exception)
+                        {
+                        }
+                    }
+
+                    if (removed)
+                    {
+                        storeAlert.End = DateTime.Now;
+                        storeAlert.Browser = null;
+                        Console.WriteLine($"{DateTime.Now:s} : Store {store.storeNumber} no longer has slots");
+                    }
+
+                    var activeStores = activeAlert.ActiveStores.Values.ToList().FindAll(a => a.End == null);
+                    if (removed && activeStores.Count > 0)
+                    {
+                        foreach (var activeStore in activeStores)
+                        {
+                            Console.WriteLine(
+                                $"{DateTime.Now:s} : Store {activeStore.StoreNumber} zip {activeStore.ZipCode} still has active slots ({activeStore.Status})");
                         }
                     }
                 }

@@ -20,6 +20,12 @@ namespace RiteAidWatcher
 
         public DateTime? End { get; set; }
 
+        public StoreStatusType Status { get; set; }
+
+        public DateTime? LastCheck { get; set; }
+
+        public int Tries { get; set; }
+
         public ChromeDriver Browser { get; set; }
     }
 }

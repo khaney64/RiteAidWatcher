@@ -633,13 +633,14 @@ namespace RiteAidChecker
                 Console.Beep(1000, 500); Thread.Sleep(1); Console.Beep(1000, 500); // debug
                 // todo - figure out how to write something into the the signature box - could just be a line, but probably has to be something
                 var canvas = browser.FindElement(bySignature);
-                Actions builder = new Actions(browser);
-                var drawAction = builder.MoveToElement(canvas, 10, 10)  // start point
-                             .ClickAndHold(canvas)
-                             .MoveByOffset(10, 10) // second point
-                             .Release(canvas)
-                             .Build();
-                drawAction.Perform();
+                var size = canvas.Size;
+
+                new Actions(browser)
+                    .MoveToElement(canvas, 2, 2)
+                    .ClickAndHold()
+                    .MoveByOffset(size.Width / 2, size.Height / 2)
+                    .Release()
+                    .Perform();
 
                 Thread.Sleep(1000);
 
