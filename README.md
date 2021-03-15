@@ -46,21 +46,43 @@ The following are required to get past the covid-qualifier page:
 - Occupation
 - Condition
 
+The next few are necessary for the medical questionaire:
+- Sex
+- Hispanic
+- Race
+
 ### Occupation
+Currently supports
+- Childcare Worker
+- None of the Above
+
+The code can easily be updated to add others as needed, just update the enum, and the Format method in extensions.cs.
+
+### Condition
 Currently supports 
 - Cancer
 - Diabetes
 - Obesity
 - Weakened Immune System
 
-The code can easily be updated to add others as needed, just update the enum, and the Format method in extensions.cs.
-
-### Condition
-Currently supports
-- Childcare Worker
-- None of the Above
-
 The code can easily be updated to add other Occupations or Conditions as needed, just update the enum, and the Format method in extensions.cs.
+
+### Sex
+- Female
+- Male
+- DeclineToAnswer
+
+### Hispanic
+- HispanicorLatino
+- NotHispanicorLatino
+- UnknownEthnicity
+
+### Race
+- AmericanIndianorAlaskaNative
+- Asian
+- BlackorAfricanAmerican
+- NativeHawaiianorOtherPacificIslander
+- White
 
 ## Qualification and rules
 These two are important in getting past the qualifier page, and the rules seems to change every so often.  As I write this RiteAid is only qualifying teachers in PA.  
@@ -74,7 +96,7 @@ The rules are defined [here](https://www.riteaid.com/content/dam/riteaid-web/cov
 **NOTE** that the chromedriver.exe must be in your current path.
 If Browsercheck is true, the other Data elements will be used on other pages if it finds a slot and can get far enough.
 
-The current BrowserCheck code gets as far as the medical information page... I haven't gotten there enough to debug / proceeed further though necessary steps are document in the code.
-Worst case it'll stop and leave the browser where it got to, and you should be able to continue manually.  If the program is still running/checking (i.e. not stopped in the debugger) the browser will stay up as long as there are still slots detected, otherwise it'll reset the browser back to the find stores page if slots are no longer available.
+The current BrowserCheck code gets as far as the consent page, which requires a signature.  The code will attempt to just add a dash to the signature box (not working yet) and continue to the last page.  My plan is not to automatically submit the last page, the user should confirm and do that.
+Any failures (or success up to the last page) will stop and leave the browser where it got to, and you should be able to continue manually.  If the program is still running/checking (i.e. not stopped in the debugger) the browser will stay up as long as there are still slots detected, otherwise it'll reset the browser back to the find stores page if slots are no longer available.
 
 If you run without BrowserCheck enabled, the code will just scan the (up to) 60 stores in range and look for slots, and report if any are found.  You'd likely run this side by side with an open browswer already past the [qualification page](https://www.riteaid.com/pharmacy/covid-qualifier) waiting for a zip code to search.  When the code finds a zip with a slot, it'll beep and print out the store and zip code information (it also does this with BrowserCheck enabled).  The browser check option will weed out a lot of the false hits their api often reports, avoiding you the trouble/frustration of checking only to have it tell you no slots are available.
