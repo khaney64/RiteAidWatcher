@@ -189,7 +189,6 @@ namespace RiteAidChecker
                     return (true, "at consent");
                 }
 
-                Console.Beep(200,500); //debug
                 return (true, $"({covidTimes.Count})");
             }
 
@@ -484,8 +483,6 @@ namespace RiteAidChecker
             {
                 var wait = new WebDriverWait(browser, TimeSpan.FromSeconds(20));
 
-
-                Console.Beep(1000, 500); Thread.Sleep(1); Console.Beep(1000, 500); // debug
                 // make sure we're on the right page.. look for gender
                 var tries = 0;
                 const int maxTries = 3;
@@ -500,12 +497,87 @@ namespace RiteAidChecker
                     Thread.Sleep(500);
                 }
 
+                // Sex
+                var sexBy = By.XPath("//*[@id=\"mi_gender\"]");
+                var dropdown = browser.ScrollElementIntoView(sexBy, clickable: true);
+                Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
+                dropdown.Click();
+                wait.Until(ExpectedConditions.ElementExists(By.CssSelector("div[class=\"form__row typeahead__container result\"]")));
+                dropdown.SendKeys(data.Sex.Format());
+
+                // if male, both female then male will come up in list, so need to pick item 1 for male.
+                // if female, it'll be 0th item
+                var itemNum = data.Sex == SexType.Male ? 1 : 0;
+                var itemBy = By.XPath($"//li[@class=\"typeahead__item typeahead__group-group\"][@data-index=\"{itemNum}\"]");
+                //var item = wait.Until(ExpectedConditions.ElementToBeClickable(itemBy));
+                //item.Click();
+
+                // Hispanic
+                var hispanicBy = By.XPath("//*[@id=\"mi_origin\"]");
+                if (browser.IsElementPresent(hispanicBy))
+                {
+                    int foo = 1;
+                }
+                dropdown = browser.ScrollElementIntoView(hispanicBy, clickable: true);
+                Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
+                dropdown.Click();
+                wait.Until(ExpectedConditions.ElementExists(By.CssSelector("div[class=\"form__row typeahead__container result\"]")));
+                dropdown.SendKeys(data.Hispanic.Format());
+
+                itemBy = By.XPath($"//li[@class=\"typeahead__item typeahead__group-group\"][@data-index=\"0\"]");
+                if (browser.IsElementPresent(itemBy))
+                {
+                    int foo = 1;
+                }
+
+                // not sure why sex select/click works, but not hispanic or race.  may be because I'm still seeing sex dropdown element?
+                // cick doesn't seem to be necessar.. going to the next field accepts what was keyed in.
+
+                var items = browser.FindElements(By.CssSelector("li[class=\"typeahead__item typeahead__group-group\"]"));
+                //item = wait.Until(ExpectedConditions.ElementToBeClickable(itemBy));
+                //item.Click();
+
+                // Race
+                var raceBy = By.XPath("//*[@id=\"mi_represents\"]");
+                dropdown = browser.ScrollElementIntoView(raceBy, clickable: true);
+                Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
+                dropdown.Click();
+                wait.Until(ExpectedConditions.ElementExists(By.CssSelector("div[class=\"form__row typeahead__container result\"]")));
+                dropdown.SendKeys(data.Race.Format());
+
+                itemBy = By.XPath($"//li[@class=\"typeahead__item typeahead__group-group\"][@data-index=\"0\"]");
+                //item = wait.Until(ExpectedConditions.ElementToBeClickable(itemBy));
+                //item.Click();
+
+                // questionnaire
+                SelectAnswer(browser, "HasHealthProblem", AnswerType.Yes);
+                SelectAnswer(browser, "HasLungProblem", AnswerType.No);
+                SelectAnswer(browser, "UsesNicotine", AnswerType.No);
+                SelectAnswer(browser, "HasVaxAllergy", AnswerType.No);
+                SelectAnswer(browser, "GotVaxInLast4Weeks", AnswerType.No);
+                SelectAnswer(browser, "HasPriorVaxReaction", AnswerType.No);
+                SelectAnswer(browser, "HasSeizureHistory", AnswerType.No);
+                SelectAnswer(browser, "HasImmuneProblem", AnswerType.No);
+                SelectAnswer(browser, "TakesCancerDrugs", AnswerType.No);
+                SelectAnswer(browser, "ReceivedTransfusion", AnswerType.No);
+                SelectAnswer(browser, "IsInfantCaregiver", AnswerType.No);
+                SelectAnswer(browser, "IsPregnant", AnswerType.No);
+                SelectAnswer(browser, "HasImmRecCard", AnswerType.DontKnow);
+                SelectAnswer(browser, "HasMedAdherenceProgram", AnswerType.DontKnow);
+                SelectAnswer(browser, "HadFluShot", AnswerType.Yes);
+                SelectAnswer(browser, "HadShinglesShot", AnswerType.No);
+                SelectAnswer(browser, "HadWhoopShot", AnswerType.DontKnow);
+
+                // other conditions
+                var otherConditionsBy = By.CssSelector("textarea[id=\"ptHasOtherMedicalCondition\"]");
+                var otherConditions = browser.ScrollElementIntoView(otherConditionsBy);
+                otherConditions.SendKeys(data.OtherConditions + Keys.Tab);
+
                 Thread.Sleep(1000);
 
-
                 // Next
-                //var nextButton = browser.ScrollElementIntoView("//*[@id=\"continue\"]", clickable: true);
-                //nextButton.Click();
+                var nextButton = browser.ScrollElementIntoView("//*[@id=\"continue\"]", clickable: true);
+                nextButton.Click();
 
                 return true;
             }
@@ -516,6 +588,20 @@ namespace RiteAidChecker
                 Console.Error.WriteLine(e.StackTrace);
                 return false;
             }
+        }
+
+        private static void SelectAnswer(ChromeDriver browser, string questionId, AnswerType answer)
+        {
+            var elementId = $"{answer.Format()}pt{questionId}";
+            var elementBy = By.CssSelector($"button[id=\"{elementId}\"]");
+
+            if (browser.IsElementPresent(elementBy))
+            {
+                int debug = 1;
+            }
+
+            var element = browser.ScrollElementIntoView(elementBy, clickable: true);
+            element.Click();
         }
 
         private static bool ConsentPage(ChromeDriver browser, RiteAidData data)
@@ -530,7 +616,6 @@ namespace RiteAidChecker
             {
                 var wait = new WebDriverWait(browser, TimeSpan.FromSeconds(20));
 
-                Console.Beep(1000, 500); Thread.Sleep(1); Console.Beep(1000, 500); // debug
                 // make sure we're on the right page.. look for guardian slider
                 var tries = 0;
                 const int maxTries = 3;
@@ -545,14 +630,22 @@ namespace RiteAidChecker
                     Thread.Sleep(500);
                 }
 
+                Console.Beep(1000, 500); Thread.Sleep(1); Console.Beep(1000, 500); // debug
                 // todo - figure out how to write something into the the signature box - could just be a line, but probably has to be something
-
+                var canvas = browser.FindElement(bySignature);
+                Actions builder = new Actions(browser);
+                var drawAction = builder.MoveToElement(canvas, 10, 10)  // start point
+                             .ClickAndHold(canvas)
+                             .MoveByOffset(10, 10) // second point
+                             .Release(canvas)
+                             .Build();
+                drawAction.Perform();
 
                 Thread.Sleep(1000);
 
                 // Next
-                //var nextButton = browser.ScrollElementIntoView("//*[@id=\"continue\"]", clickable: true);
-                //nextButton.Click();
+                var nextButton = browser.ScrollElementIntoView("//*[@id=\"continue\"]", clickable: true);
+                nextButton.Click();
 
                 return true;
             }

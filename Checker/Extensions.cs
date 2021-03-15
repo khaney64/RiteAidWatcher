@@ -37,6 +37,68 @@ namespace RiteAidChecker
             }
         }
 
+        public static string Format(this SexType sex)
+        {
+            switch (sex)
+            {
+                case SexType.Male:
+                case SexType.Female:
+                    return sex.ToString();
+                case SexType.DeclineToAnswer:
+                    return "Decline to Answer";
+                default:
+                    throw new Exception($"Unexpected Sex {sex}");
+            }
+        }
+
+        public static string Format(this RaceType race)
+        {
+            switch (race)
+            {
+                case RaceType.AmericanIndianorAlaskaNative:
+                    return "American Indian or Alaska Native";
+                case RaceType.BlackorAfricanAmerican:
+                    return "Black or African American";
+                case RaceType.NativeHawaiianorOtherPacificIslander:
+                    return "Native Hawaiian or Other Pacific Islander";
+                case RaceType.Asian:
+                case RaceType.White:
+                    return race.ToString();
+                default:
+                    throw new Exception($"Unexpected Race {race}");
+            }
+        }
+
+        public static string Format(this HispanicType hispanic)
+        {
+            switch (hispanic)
+            {
+                case HispanicType.HispanicorLatino:
+                    return "Hispanic or Latino";
+                case HispanicType.NotHispanicorLatino:
+                    return "Not Hispanic or Latino";
+                case HispanicType.UnknownEthnicity:
+                    return "Unknown Ethnicity";
+                default:
+                    throw new Exception($"Unexpected Hispanic Type {hispanic}");
+            }
+        }
+
+        public static string Format(this AnswerType answer)
+        {
+            switch (answer)
+            {
+                case AnswerType.Yes:
+                    return "ys";
+                case AnswerType.No:
+                    return "no";
+                case AnswerType.DontKnow:
+                    return "na";
+                default:
+                    throw new Exception($"Unexpected Answer {answer}");
+            }
+        }
+
         public static IWebElement ScrollElementIntoView(this ChromeDriver driver, string xpath, bool clickable = false)
         {
             var wait = new WebDriverWait(driver, System.TimeSpan.FromSeconds(20));

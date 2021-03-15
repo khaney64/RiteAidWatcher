@@ -23,5 +23,11 @@ namespace RiteAidChecker
         [JsonConverter(typeof(StringEnumConverter))]
         public ConditionType Condition { get; set; }
         public string OtherConditions { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
+        public SexType Sex { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
+        public HispanicType Hispanic { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
+        public RaceType Race { get; set; }
     }
 }

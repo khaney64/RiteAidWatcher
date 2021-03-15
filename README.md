@@ -26,7 +26,10 @@ where
     "EmailAddress": "john.user@mailserver.com",
     "Occupation": "ChildcareWorker",
     "Condition": "Cancer",
-    "OtherConditions": "cancer"
+    "OtherConditions": "cancer",
+    "Sex" : "Male",
+    "Hispanic": "NotHispanicOrLatino",
+    "Race": "White"
   },
   "MaxMiles": 50,
   "Filter": true,
