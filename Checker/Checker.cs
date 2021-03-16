@@ -635,11 +635,34 @@ namespace RiteAidChecker
                 var canvas = browser.FindElement(bySignature);
                 var size = canvas.Size;
 
+                Console.WriteLine($"canvas info {size.Width}x{size.Height} empty = {size.IsEmpty}");
+
                 new Actions(browser)
                     .MoveToElement(canvas, 2, 2)
-                    .ClickAndHold()
-                    .MoveByOffset(size.Width / 2, size.Height / 2)
-                    .Release()
+                    .Perform();
+
+                Console.WriteLine($"canvas test 1");
+
+                new Actions(browser)
+                    .MoveToElement(canvas, 2, 2)
+                    .ClickAndHold(canvas)
+                    .Perform();
+
+                Console.WriteLine($"canvas test 2");
+
+                new Actions(browser)
+                    .MoveToElement(canvas, 2, 2)
+                    .ClickAndHold(canvas)
+                    .Release(canvas)
+                    .Perform();
+
+                Console.WriteLine($"canvas test 3");
+
+                new Actions(browser)
+                    .MoveToElement(canvas, 2, 2)
+                    .ClickAndHold(canvas)
+                    .MoveToElement(canvas, size.Width / 2, size.Height / 2)
+                    .Release(canvas)
                     .Perform();
 
                 Thread.Sleep(1000);
