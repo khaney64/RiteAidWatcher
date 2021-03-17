@@ -638,31 +638,27 @@ namespace RiteAidChecker
                 Console.WriteLine($"canvas info {size.Width}x{size.Height} empty = {size.IsEmpty}");
 
                 new Actions(browser)
-                    .MoveToElement(canvas, 2, 2)
-                    .Perform();
-
-                Console.WriteLine($"canvas test 1");
-
-                new Actions(browser)
-                    .MoveToElement(canvas, 2, 2)
-                    .ClickAndHold(canvas)
-                    .Perform();
-
-                Console.WriteLine($"canvas test 2");
-
-                new Actions(browser)
-                    .MoveToElement(canvas, 2, 2)
-                    .ClickAndHold(canvas)
-                    .Release(canvas)
-                    .Perform();
-
-                Console.WriteLine($"canvas test 3");
-
-                new Actions(browser)
-                    .MoveToElement(canvas, 2, 2)
+                    .MoveToElement(canvas, size.Width / 4, size.Height / 2)
                     .ClickAndHold(canvas)
                     .MoveToElement(canvas, size.Width / 2, size.Height / 2)
                     .Release(canvas)
+                    .Perform();
+
+                new Actions(browser)
+                    .MoveToElement(canvas, size.Width / 4, size.Height / 3)
+                    .Click(canvas)
+                    .ClickAndHold(canvas)
+                    .MoveToElement(canvas, size.Width / 2, size.Height / 3)
+                    .Release(canvas)
+                    .Perform();
+
+                new Actions(browser)
+                    .MoveToElement(canvas, size.Width / 4, size.Height / 3)
+                    .Click(canvas)
+                    .ClickAndHold(canvas)
+                    .MoveByOffset(10, 0)
+                    .Release(canvas)
+                    .Build()
                     .Perform();
 
                 Thread.Sleep(1000);
