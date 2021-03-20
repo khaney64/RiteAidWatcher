@@ -314,169 +314,6 @@ namespace RiteAidChecker
              * look for signature box
              *   signature : //*[@id="signature"]
              *
-             * health questions document details 
-             *<div class="covid-scheduler__section">
-                <div class="form__group">
-                    <div class="form__row question"><p>Do you have a long-term health problem with heart disease, kidney disease, metabolic disorder (e.g. diabetes), anemia, or blood disorders?</p></div>
-                    <div class="form__row btn-group">
-                        <button id="ysptHasHealthProblem" type="button" class="button">Yes</button>
-                        <button id="noptHasHealthProblem" type="button" class="button">No</button>
-                        <button id="naptHasHealthProblem" type="button" class="button">Don't Know</button>
-                        <input name="ptHasHealthProblem" id="ptHasHealthProblem" class="form__input questionscreen4" hidden="">
-                    </div>
-                </div>
-                <div class="form__group">
-                    <div class="form__row question"><p>Do you have a long-term health problem with lung disease or asthma?</p></div>
-                    <div class="form__row btn-group">
-                        <button id="ysptHasLungProblem" type="button" class="button">Yes</button>
-                        <button id="noptHasLungProblem" type="button" class="button">No</button>
-                        <button id="naptHasLungProblem" type="button" class="button">Don't Know</button>
-                        <input name="ptHasLungProblem" id="ptHasLungProblem" class="form__input questionscreen4" hidden="">
-                    </div>
-                </div>
-                <div class="form__group">
-                    <div class="form__row question"><p>Do you use any nicotine products?</p></div>
-                    <div class="form__row btn-group">
-                        <button id="ysptUsesNicotine" type="button" class="button" name="ptUsesNicotine">Yes</button>
-                        <button id="noptUsesNicotine" type="button" class="button">No</button>
-                        <button id="naptUsesNicotine" type="button" class="button">Don't Know</button>
-                        <input name="ptUsesNicotine" id="ptUsesNicotine" class="form__input questionscreen4" hidden="">
-                    </div>
-                </div>
-                <div class="form__group">
-                    <div class="form__row question"><p>Do you have allergies to medications, food (i.e. eggs), latex or any vaccine component (e.g. neomycin, formaldehyde, gentamicin, thimerosal, bovine protein, phenol, polymyxin, gelatin, baker's yeast or yeast)?</p></div>
-                    <div class="form__row btn-group">
-                        <button id="ysptHasVaxAllergy" type="button" class="button">Yes</button>
-                        <button id="noptHasVaxAllergy" type="button" class="button">No</button>
-                        <button id="naptHasVaxAllergy" type="button" class="button">Don't Know</button>
-                        <input name="ptHasVaxAllergy" id="ptHasVaxAllergy" class="form__input questionscreen4" hidden="">
-                    </div>
-                </div>
-                <div class="form__group">
-                    <div class="form__row question"><p>Have you received any vaccinations in the past 4 weeks?</p></div>
-                    <div class="form__row btn-group">
-                        <button id="ysptGotVaxInLast4Weeks" type="button" class="button">Yes</button>
-                        <button id="noptGotVaxInLast4Weeks" type="button" class="button">No</button>
-                        <button id="naptGotVaxInLast4Weeks" type="button" class="button">Don't Know</button>
-                        <input name="ptGotVaxInLast4Weeks" id="ptGotVaxInLast4Weeks" class="form__input questionscreen4" hidden="">
-                    </div>
-                </div>
-                <div class="form__group">
-                    <div class="form__row question"><p>Have you ever had a serious reaction after receiving a vaccination?</p></div>
-                    <div class="form__row btn-group">
-                        <button id="ysptHasPriorVaxReaction" type="button" class="button">Yes</button>
-                        <button id="noptHasPriorVaxReaction" type="button" class="button">No</button>
-                        <button id="naptHasPriorVaxReaction" type="button" class="button">Don't Know</button>
-                        <input name="ptHasPriorVaxReaction" id="ptHasPriorVaxReaction" class="form__input questionscreen4" hidden="">
-                    </div>
-                </div>
-                <div class="form__group">
-                    <div class="form__row question"><p>Do you have a neurological disorder such as seizures or other disorders that affect the brain or have had a disorder that resulted from vaccine (e.g. Guillain-Barre Syndrome)?</p></div>
-                    <div class="form__row btn-group">
-                        <button id="ysptHasSeizureHistory" type="button" class="button">Yes</button>
-                        <button id="noptHasSeizureHistory" type="button" class="button">No</button>
-                        <button id="naptHasSeizureHistory" type="button" class="button">Don't Know</button>
-                        <input name="ptHasSeizureHistory" id="ptHasSeizureHistory" class="form__input questionscreen4" hidden="">
-                    </div>
-                </div>
-                <div class="form__group">
-                    <div class="form__row question"><p>Do you have cancer, leukemia, AIDS, or any other immune system problem? (in some circumstances you may be referred to your physician)</p></div>
-                    <div class="form__row btn-group">
-                        <button id="ysptHasImmuneProblem" type="button" class="button">Yes</button>
-                        <button id="noptHasImmuneProblem" type="button" class="button">No</button>
-                        <button id="naptHasImmuneProblem" type="button" class="button">Don't Know</button>
-                        <input name="ptHasImmuneProblem" id="ptHasImmuneProblem" class="form__input questionscreen4" hidden="">
-                    </div>
-                </div>
-                <div class="form__group">
-                    <div class="form__row question"><p>Do you take prednisone, other steroids, or anticancer drugs, or have you had radiation treatments?</p></div>
-                    <div class="form__row btn-group">
-                        <button id="ysptTakesCancerDrugs" type="button" class="button">Yes</button>
-                        <button id="noptTakesCancerDrugs" type="button" class="button">No</button>
-                        <button id="naptTakesCancerDrugs" type="button" class="button">Don't Know</button>
-                        <input name="ptTakesCancerDrugs" id="ptTakesCancerDrugs" class="form__input questionscreen4" hidden="">
-                    </div>
-                </div>
-                <div class="form__group">
-                    <div class="form__row question"><p>During the past year, have you received a transfusion of blood or blood products, including anti bodies?</p></div>
-                    <div class="form__row btn-group">
-                        <button id="ysptReceivedTransfusion" type="button" class="button">Yes</button>
-                        <button id="noptReceivedTransfusion" type="button" class="button">No</button>
-                        <button id="naptReceivedTransfusion" type="button" class="button">Don't Know</button>
-                        <input name="ptReceivedTransfusion" id="ptReceivedTransfusion" class="form__input questionscreen4" hidden="">
-                    </div>
-                </div>
-                <div class="form__group">
-                    <div class="form__row question"><p>Are you parent, family member, or caregiver to a new born infant?</p></div>
-                    <div class="form__row btn-group">
-                        <button id="ysptIsInfantCaregiver" type="button" class="button">Yes</button>
-                        <button id="noptIsInfantCaregiver" type="button" class="button">No</button>
-                        <button id="naptIsInfantCaregiver" type="button" class="button">Don't Know</button>
-                        <input name="ptIsInfantCaregiver" id="ptIsInfantCaregiver" class="form__input questionscreen4" hidden="">
-                    </div>
-                </div>
-                <div class="form__group">
-                    <div class="form__row question"><p>Are you pregnant or could you become pregnant in the next three months?</p></div>
-                    <div class="form__row btn-group">
-                        <button id="ysptIsPregnant" type="button" class="button">Yes</button>
-                        <button id="noptIsPregnant" type="button" class="button">No</button>
-                        <button id="naptIsPregnant" type="button" class="button">Don't Know</button>
-                        <input name="ptIsPregnant" id="ptIsPregnant" class="form__input questionscreen4" hidden="">
-                    </div>
-                </div>
-                <div class="form__group">
-                    <div class="form__row question"><p>Will you bring your Immunization Record Card with you?</p></div>
-                    <div class="form__row btn-group">
-                        <button id="ysptHasImmRecCard" type="button" class="button">Yes</button>
-                        <button id="noptHasImmRecCard" type="button" class="button">No</button>
-                        <button id="naptHasImmRecCard" type="button" class="button">Don't Know</button>
-                        <input name="ptHasImmRecCard" id="ptHasImmRecCard" class="form__input questionscreen4" hidden="">
-                    </div>
-                </div>
-                <div class="form__group">
-                    <div class="form__row question"><p>Are you currently enrolled in one of our medication adherence programs at Rite Aid (OneTrip Refill, Automated Courtesy Refills, or Rx Messaging - Text, Email, Phone)?</p></div>
-                    <div class="form__row btn-group">
-                        <button id="ysptHasMedAdherenceProgram" type="button" class="button">Yes</button>
-                        <button id="noptHasMedAdherenceProgram" type="button" class="button">No</button>
-                        <button id="naptHasMedAdherenceProgram" type="button" class="button">Don't Know</button>
-                        <input name="ptHasMedAdherenceProgram" id="ptHasMedAdherenceProgram" class="form__input questionscreen4" hidden="">
-                    </div>
-                </div>
-                <div class="form__group">
-                    <div class="form__row question"><p>Have you had a pneumococcal vaccine? (You may need two different pneumococcal shots)</p></div>
-                    <div class="form__row btn-group">
-                        <button id="ysptHadFluShot" type="button" class="button">Yes</button>
-                        <button id="noptHadFluShot" type="button" class="button">No</button>
-                        <button id="naptHadFluShot" type="button" class="button">Don't Know</button>
-                        <input name="ptHadFluShot" id="ptHadFluShot" class="form__input questionscreen4" hidden="">
-                    </div>
-                </div>
-                <div class="form__group">
-                    <div class="form__row question"><p>Have you had a shingles vaccine?</p></div>
-                    <div class="form__row btn-group">
-                        <button id="ysptHadShinglesShot" type="button" class="button">Yes</button>
-                        <button id="noptHadShinglesShot" type="button" class="button">No</button>
-                        <button id="naptHadShinglesShot" type="button" class="button">Don't Know</button>
-                        <input name="ptHadShinglesShot" id="ptHadShinglesShot" class="form__input questionscreen4" hidden="">
-                    </div>
-                </div>
-                <div class="form__group">
-                    <div class="form__row question"><p>Have you had a whooping cough(Tdap/Td) vaccine?</p></div>
-                    <div class="form__row btn-group">
-                        <button id="ysptHadWhoopShot" type="button" class="button">Yes</button>
-                        <button id="noptHadWhoopShot" type="button" class="button">No</button>
-                        <button id="naptHadWhoopShot" type="button" class="button">Don't Know</button>
-                        <input name="ptHadWhoopShot" id="ptHadWhoopShot" class="form__input questionscreen4" hidden="">
-                    </div>
-                </div>
-				<div class="form__group">
-                	<div class="form__row question">
-                    	<label for="ptHasOtherMedicalCondition">Do you have any other medical conditions? (optional)</label>
-                        <textarea id="ptHasOtherMedicalCondition" name="ptHasOtherMedicalCondition" class="form__input" aria-label="Enter other medical conditions"></textarea><br>
-                	</div>
-            	</div>
-             </div>
-             *
              *
              */
 
@@ -500,9 +337,7 @@ namespace RiteAidChecker
 
                 // Sex
                 var sexBy = By.XPath("//*[@id=\"mi_gender\"]");
-                var dropdown = browser.ScrollElementIntoView(sexBy, clickable: true);
-                Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
-                dropdown.Click();
+                var dropdown = FindFieldAndClick(browser, wait, sexBy);
                 wait.Until(ExpectedConditions.ElementExists(By.CssSelector("div[class=\"form__row typeahead__container result\"]")));
                 dropdown.SendKeys(data.Sex.Format());
 
@@ -515,13 +350,7 @@ namespace RiteAidChecker
 
                 // Hispanic
                 var hispanicBy = By.XPath("//*[@id=\"mi_origin\"]");
-                if (browser.IsElementPresent(hispanicBy))
-                {
-                    int foo = 1;
-                }
-                dropdown = browser.ScrollElementIntoView(hispanicBy, clickable: true);
-                Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
-                dropdown.Click();
+                dropdown = FindFieldAndClick(browser, wait, hispanicBy);
                 wait.Until(ExpectedConditions.ElementExists(By.CssSelector("div[class=\"form__row typeahead__container result\"]")));
                 dropdown.SendKeys(data.Hispanic.Format());
 
@@ -540,9 +369,7 @@ namespace RiteAidChecker
 
                 // Race
                 var raceBy = By.XPath("//*[@id=\"mi_represents\"]");
-                dropdown = browser.ScrollElementIntoView(raceBy, clickable: true);
-                Thread.Sleep(1000);  // can't seem to find the right waits to avoid this
-                dropdown.Click();
+                dropdown = FindFieldAndClick(browser, wait, raceBy);
                 wait.Until(ExpectedConditions.ElementExists(By.CssSelector("div[class=\"form__row typeahead__container result\"]")));
                 dropdown.SendKeys(data.Race.Format());
 
@@ -736,6 +563,34 @@ namespace RiteAidChecker
             wait.Until(ExpectedConditions.ElementExists(by));
             var field = browser.ScrollElementIntoView(by);
             field.SendKeys(value);
+        }
+
+        private static IWebElement FindFieldAndClick(ChromeDriver browser, WebDriverWait wait, By by, int maxTries = 3)
+        {
+            var tries = 0;
+            var success = false;
+            IWebElement field = null;
+            while (tries < maxTries && !success)
+            {
+                try
+                {
+                    tries++;
+                    wait.Until(ExpectedConditions.ElementExists(by));
+                    field = browser.ScrollElementIntoView(by, clickable: true);
+                    field.Click();
+                    success = true;
+                }
+                catch (Exception)
+                {
+                    if (tries >= maxTries)
+                    {
+                        throw;
+                    }
+                }
+                Thread.Sleep(500);
+            }
+
+            return field;
         }
     }
 }

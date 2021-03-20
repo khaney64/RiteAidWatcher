@@ -63,7 +63,15 @@ namespace RiteAidWatcher
 
             provider = services.BuildServiceProvider();
 
-            await new RiteAidWatcher(config).Watch(config.Data.Zip);
+            try
+            {
+                await new RiteAidWatcher(config).Watch(config.Data.Zip);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Unexpected fatal exception : {e.Message}");
+                Console.WriteLine(e.StackTrace);
+            }
         }
 
         private RiteAidWatcher(RiteAidConfig riteAidConfig)
