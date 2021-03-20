@@ -10,6 +10,7 @@ using System.Threading;
 using Newtonsoft.Json.Serialization;
 using ExpectedConditions = SeleniumExtras.WaitHelpers.ExpectedConditions;
 using System.Linq;
+using OpenQA.Selenium.Internal;
 
 namespace RiteAidChecker
 {
@@ -637,13 +638,38 @@ namespace RiteAidChecker
 
                 Console.WriteLine($"canvas info {size.Width}x{size.Height} empty = {size.IsEmpty}");
 
+                Console.WriteLine("Test 1 " + TryCanvas(() => {
+                    new Actions(browser)
+                        .MoveToElement(canvas, size.Width / 4, size.Height / 2)
+                        .Perform();
+                }));
+
+                Console.WriteLine("Test 2 " + TryCanvas(() => {
+                new Actions(browser)
+                    .MoveToElement(canvas, size.Width / 4, size.Height / 2)
+                    .ClickAndHold(canvas)
+                    .Release(canvas)
+                    .Perform();
+                }));
+
+                Console.WriteLine("Test 3 " + TryCanvas(() => {
                 new Actions(browser)
                     .MoveToElement(canvas, size.Width / 4, size.Height / 2)
                     .ClickAndHold(canvas)
                     .MoveToElement(canvas, size.Width / 2, size.Height / 2)
+                    .Perform();
+                }));
+
+                Console.WriteLine("Test 4 " + TryCanvas(() => {
+                new Actions(browser)
+                    .MoveToElement(canvas, size.Width / 4, size.Height / 2)
+                    .ClickAndHold(canvas)
+                    .MoveByOffset(10, 0)
                     .Release(canvas)
                     .Perform();
+                }));
 
+                Console.WriteLine("Test 5 " + TryCanvas(() => {
                 new Actions(browser)
                     .MoveToElement(canvas, size.Width / 4, size.Height / 3)
                     .Click(canvas)
@@ -651,7 +677,9 @@ namespace RiteAidChecker
                     .MoveToElement(canvas, size.Width / 2, size.Height / 3)
                     .Release(canvas)
                     .Perform();
+                }));
 
+                Console.WriteLine("Test 6 " + TryCanvas(() => {
                 new Actions(browser)
                     .MoveToElement(canvas, size.Width / 4, size.Height / 3)
                     .Click(canvas)
@@ -660,6 +688,18 @@ namespace RiteAidChecker
                     .Release(canvas)
                     .Build()
                     .Perform();
+                }));
+
+                Console.WriteLine("Test 7 " + TryCanvas(() => {
+                new Actions(browser)
+                    .MoveToElement(canvas, 30, 80) //start points x axis and y axis. 
+                    .Click()
+                    .ClickAndHold()
+                    .MoveByOffset(50, 100) // 2nd points (x1,y1)
+                    .Release()
+                    .Build()
+                    .Perform();
+                }));
 
                 Thread.Sleep(1000);
 
@@ -675,6 +715,19 @@ namespace RiteAidChecker
                 Console.Error.WriteLine($"Unexpected Consent: {e.Message}");
                 Console.Error.WriteLine(e.StackTrace);
                 return false;
+            }
+        }
+
+        private static string TryCanvas(Action action)
+        {
+            try
+            {
+                action();
+                return "success";
+            }
+            catch (Exception e)
+            {
+                return $"fail : {e.Message}";
             }
         }
 
