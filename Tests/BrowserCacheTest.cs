@@ -15,9 +15,9 @@ namespace RiteAidTests
             var data = new RiteAidData()
             {
                 BirthDate = "01/01/2000",
-                City = "***REMOVED***",
+                City = "Downingtown",
                 StateName = "Pennsylvania",
-                Zip = "***REMOVED***",
+                Zip = "19335",
                 Condition = ConditionType.WeakendImmuneSystem,
                 Occupation = OccupationType.NoneOfTheAbove
             };

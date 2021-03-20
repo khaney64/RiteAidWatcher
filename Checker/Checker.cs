@@ -496,38 +496,6 @@ namespace RiteAidChecker
                     .Perform();
                 }));
 
-                Console.WriteLine("Test 5 " + TryCanvas(() => {
-                new Actions(browser)
-                    .MoveToElement(canvas, size.Width / 4, size.Height / 3)
-                    .Click(canvas)
-                    .ClickAndHold(canvas)
-                    .MoveToElement(canvas, size.Width / 2, size.Height / 3)
-                    .Release(canvas)
-                    .Perform();
-                }));
-
-                Console.WriteLine("Test 6 " + TryCanvas(() => {
-                new Actions(browser)
-                    .MoveToElement(canvas, size.Width / 4, size.Height / 3)
-                    .Click(canvas)
-                    .ClickAndHold(canvas)
-                    .MoveByOffset(10, 0)
-                    .Release(canvas)
-                    .Build()
-                    .Perform();
-                }));
-
-                Console.WriteLine("Test 7 " + TryCanvas(() => {
-                new Actions(browser)
-                    .MoveToElement(canvas, 30, 80) //start points x axis and y axis. 
-                    .Click()
-                    .ClickAndHold()
-                    .MoveByOffset(50, 100) // 2nd points (x1,y1)
-                    .Release()
-                    .Build()
-                    .Perform();
-                }));
-
                 Thread.Sleep(1000);
 
                 // Next
