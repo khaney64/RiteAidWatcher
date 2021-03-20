@@ -85,7 +85,7 @@ The code can easily be updated to add other Occupations or Conditions as needed,
 - White
 
 ## Qualification and rules
-These two are important in getting past the qualifier page, and the rules seems to change every so often.  As I write this RiteAid is only qualifying teachers in PA.  
+Occupation, Condtion and Age are critical in getting past the qualifier page, and the rules seems to change every so often.  As I write this RiteAid is only qualifying teachers in PA.  
 
 The rules are defined [here](https://www.riteaid.com/content/dam/riteaid-web/covid-19/rule-engine.json) and the code will dump out any rules it finds for the given StateCode.  If you're having trouble getting past the qualifier page, you are likely running up against the rules.
 
@@ -96,7 +96,10 @@ The rules are defined [here](https://www.riteaid.com/content/dam/riteaid-web/cov
 **NOTE** that the chromedriver.exe must be in your current path.
 If Browsercheck is true, the other Data elements will be used on other pages if it finds a slot and can get far enough.
 
-The current BrowserCheck code gets as far as the consent page, which requires a signature.  The code will attempt to just add a dash to the signature box (not working yet) and continue to the last page.  My plan is not to automatically submit the last page, the user should confirm and do that.
+The current BrowserCheck code can get as far as the last page.  My plan is *not* to automatically submit the last page, the user should confirm and do that.
+It occassionally will time out or fail on some of the intermediate final pages for various reasons, seems to depend on system load, code probably not waiting long enough, etc.
 Any failures (or success up to the last page) will stop and leave the browser where it got to, and you should be able to continue manually.  If the program is still running/checking (i.e. not stopped in the debugger) the browser will stay up as long as there are still slots detected, otherwise it'll reset the browser back to the find stores page if slots are no longer available.
+A slot found will wait at which ever page it gets to (up to the last), and the browser will be marked as "hold" status for up to 10 minutes (if slots are not found after 10 minutes, it'l reload the browser to the find stores page.
+The code currently starts up a BrowserCache of 2 browsers - the only real reason to have more than one is if there happen to be multiple hits at once, but for most cases that's probabl not necessary (and it often leads to a false start where one browser comes up successfully but the other doesn't, which requires a restart. 
 
 If you run without BrowserCheck enabled, the code will just scan the (up to) 60 stores in range and look for slots, and report if any are found.  You'd likely run this side by side with an open browswer already past the [qualification page](https://www.riteaid.com/pharmacy/covid-qualifier) waiting for a zip code to search.  When the code finds a zip with a slot, it'll beep and print out the store and zip code information (it also does this with BrowserCheck enabled).  The browser check option will weed out a lot of the false hits their api often reports, avoiding you the trouble/frustration of checking only to have it tell you no slots are available.
