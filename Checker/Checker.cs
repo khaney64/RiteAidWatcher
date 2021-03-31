@@ -153,8 +153,9 @@ namespace RiteAidChecker
 
             wait.Until(ExpectedConditions.ElementExists(nextByXpath));
             Thread.Sleep(1000);
-            var nextButton = driver.ScrollElementIntoView(nextByXpath, clickable: true);
-            nextButton.Click();
+            //var nextButton = driver.ScrollElementIntoView(nextByXpath, clickable: true);
+            //nextButton.Click();
+            FindFieldAndClick(driver, wait, nextByXpath);
 
             Thread.Sleep(2000);
 
@@ -173,7 +174,7 @@ namespace RiteAidChecker
                 Thread.Sleep(1000);
 
                 var nextByCss = By.CssSelector("button[id=\"continue\"][class*=\"covid-scheduler__contnuebtn form-btns--continue\"]");
-                nextButton = driver.ScrollElementIntoView(nextByCss, clickable:true);
+                var nextButton = driver.ScrollElementIntoView(nextByCss, clickable:true);
                 Thread.Sleep(1000);
                 nextButton.Click();
 
@@ -345,8 +346,8 @@ namespace RiteAidChecker
                 // if female, it'll be 0th item
                 var itemNum = data.Sex == SexType.Male ? 1 : 0;
                 var itemBy = By.XPath($"//li[@class=\"typeahead__item typeahead__group-group\"][@data-index=\"{itemNum}\"]");
-                //var item = wait.Until(ExpectedConditions.ElementToBeClickable(itemBy));
-                //item.Click();
+                var item = wait.Until(ExpectedConditions.ElementToBeClickable(itemBy));
+                item.Click();
 
                 // Hispanic
                 var hispanicBy = By.XPath("//*[@id=\"mi_origin\"]");
@@ -355,17 +356,10 @@ namespace RiteAidChecker
                 dropdown.SendKeys(data.Hispanic.Format());
 
                 itemBy = By.XPath($"//li[@class=\"typeahead__item typeahead__group-group\"][@data-index=\"0\"]");
-                if (browser.IsElementPresent(itemBy))
-                {
-                    int foo = 1;
-                }
-
-                // not sure why sex select/click works, but not hispanic or race.  may be because I'm still seeing sex dropdown element?
-                // cick doesn't seem to be necessar.. going to the next field accepts what was keyed in.
-
-                var items = browser.FindElements(By.CssSelector("li[class=\"typeahead__item typeahead__group-group\"]"));
-                //item = wait.Until(ExpectedConditions.ElementToBeClickable(itemBy));
-                //item.Click();
+                // itemBy finds the previous dropdowns, too, so need to find the one with our text and click that one
+                var items = browser.FindElements(itemBy);
+                item = items.ToList().Find(e => e.Text == data.Hispanic.Format());
+                item.Click();
 
                 // Race
                 var raceBy = By.XPath("//*[@id=\"mi_represents\"]");
@@ -373,9 +367,9 @@ namespace RiteAidChecker
                 wait.Until(ExpectedConditions.ElementExists(By.CssSelector("div[class=\"form__row typeahead__container result\"]")));
                 dropdown.SendKeys(data.Race.Format());
 
-                itemBy = By.XPath($"//li[@class=\"typeahead__item typeahead__group-group\"][@data-index=\"0\"]");
-                //item = wait.Until(ExpectedConditions.ElementToBeClickable(itemBy));
-                //item.Click();
+                items = browser.FindElements(itemBy);
+                item = items.ToList().Find(e => e.Text == data.Race.Format());
+                item.Click();
 
                 // questionnaire
                 SelectAnswer(browser, "HasHealthProblem", AnswerType.No);
@@ -463,38 +457,38 @@ namespace RiteAidChecker
                 var canvas = browser.FindElement(bySignature);
                 var size = canvas.Size;
 
-                Console.WriteLine($"canvas info {size.Width}x{size.Height} empty = {size.IsEmpty}");
+                //Console.WriteLine($"canvas info {size.Width}x{size.Height} empty = {size.IsEmpty}");
 
-                Console.WriteLine("Test 1 " + TryCanvas(() => {
+                TryCanvas(() => {
                     new Actions(browser)
                         .MoveToElement(canvas, size.Width / 4, size.Height / 2)
                         .Perform();
-                }));
+                });
 
-                Console.WriteLine("Test 2 " + TryCanvas(() => {
+                TryCanvas(() => {
                 new Actions(browser)
                     .MoveToElement(canvas, size.Width / 4, size.Height / 2)
                     .ClickAndHold(canvas)
                     .Release(canvas)
                     .Perform();
-                }));
+                });
 
-                Console.WriteLine("Test 3 " + TryCanvas(() => {
+                TryCanvas(() => {
                 new Actions(browser)
                     .MoveToElement(canvas, size.Width / 4, size.Height / 2)
                     .ClickAndHold(canvas)
                     .MoveToElement(canvas, size.Width / 2, size.Height / 2)
                     .Perform();
-                }));
+                });
 
-                Console.WriteLine("Test 4 " + TryCanvas(() => {
+                TryCanvas(() => {
                 new Actions(browser)
                     .MoveToElement(canvas, size.Width / 4, size.Height / 2)
                     .ClickAndHold(canvas)
                     .MoveByOffset(10, 0)
                     .Release(canvas)
                     .Perform();
-                }));
+                });
 
                 Thread.Sleep(1000);
 
