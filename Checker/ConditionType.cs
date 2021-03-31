@@ -9,6 +9,7 @@ namespace RiteAidChecker
         Cancer,
         Diabetes,
         Obesity,
+        Smoking,
         WeakendImmuneSystem
     }
 }

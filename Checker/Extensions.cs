@@ -16,6 +16,7 @@ namespace RiteAidChecker
                 case ConditionType.Cancer:
                 case ConditionType.Diabetes:
                 case ConditionType.Obesity:
+                case ConditionType.Smoking:
                     return condition.ToString();
                 case ConditionType.WeakendImmuneSystem:
                     return "Weakened Immune System";

@@ -53,7 +53,7 @@ namespace RiteAidChecker
             wait.Until(ExpectedConditions.ElementExists(By.CssSelector("div[class=\"form__row typeahead__container result\"]")));
             occupationDropdown.SendKeys(riteAidData.Occupation.Format());
 
-            var occupationItem = By.XPath("//*[@id=\"eligibility\"]/div/div[2]/div[1]/div/div/ul/li/a");
+            var occupationItem = By.XPath("//*[@id=\"eligibility\"]/div/div[2]/div/div[1]/div/div/ul/li/a");
 
             var item = wait.Until(ExpectedConditions.ElementToBeClickable(occupationItem));
             item.Click();
@@ -69,7 +69,7 @@ namespace RiteAidChecker
             wait.Until(ExpectedConditions.ElementExists(By.CssSelector("div[class=\"form__row typeahead__container result\"]")));
             conditionDropdown.SendKeys(riteAidData.Condition.Format());
 
-            var conditionItem = By.XPath("//*[@id=\"eligibility\"]/div/div[2]/div[2]/div/div/ul/li/a");
+            var conditionItem = By.XPath("//*[@id=\"eligibility\"]/div/div[2]/div/div[2]/div/div/div/ul/li/a");
 
             item = wait.Until(ExpectedConditions.ElementToBeClickable(conditionItem));
             item.Click();
@@ -378,9 +378,9 @@ namespace RiteAidChecker
                 //item.Click();
 
                 // questionnaire
-                SelectAnswer(browser, "HasHealthProblem", AnswerType.Yes);
+                SelectAnswer(browser, "HasHealthProblem", AnswerType.No);
                 SelectAnswer(browser, "HasLungProblem", AnswerType.No);
-                SelectAnswer(browser, "UsesNicotine", AnswerType.No);
+                SelectAnswer(browser, "UsesNicotine", data.Condition == ConditionType.Smoking ? AnswerType.Yes : AnswerType.No);
                 SelectAnswer(browser, "HasVaxAllergy", AnswerType.No);
                 SelectAnswer(browser, "GotVaxInLast4Weeks", AnswerType.No);
                 SelectAnswer(browser, "HasPriorVaxReaction", AnswerType.No);
